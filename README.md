@@ -1,6 +1,6 @@
-![Kyle](https://media1.tenor.com/m/33qCDJByr9kAAAAC/can-i-ask-you-a-few-questions-kyle-broflovski.gif)
-
-
+<div align="center">
+  <img src = "https://media1.tenor.com/m/33qCDJByr9kAAAAC/can-i-ask-you-a-few-questions-kyle-broflovski.gif">
+</div>
 
 # Verbalize
 Grading code submissions often fail to reveal whether a student truly understands the underlying concepts or merely submitted an AI generated solution. Capture the full picture of student learning with Verbalize! Designed for professors, Verbalize is a web-based automated oral defense platform where students verbally explain their code logic and design choices through voice calls. It analyzes their answers to verify deep comprehension, ensuring grades reflect conceptual understanding rather than just working syntax.
@@ -19,6 +19,135 @@ Grading code submissions often fail to reveal whether a student truly understand
 * ElevenLabs integration
 
 ## Timeline
+
+<table align="center">
+  <thead>
+    <tr>
+      <th>Week</th>
+      <th>Frontend Tasks</th>
+      <th>Backend Tasks</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><strong>Week 1</strong></td>
+      <td>
+        <ul>
+          <li>Discuss overall tech stack & UI designs</li>
+          <li>Start Low-to-High Fidelity UI designs</li>
+          <li>Research Next.js and Tailwind CSS</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>Finalize tech stack (Supabase/PostgreSQL)</li>
+          <li>Initialize Next.js API routes</li>
+          <li>Explore APIs using Postman</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><strong>Week 2</strong></td>
+      <td>
+        <ul>
+          <li>UI design basics review</li>
+          <li>Flesh out Professor workflow</li>
+          <li><b>Figma Design due by end of week</b></li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>Plan database schema (Professors, Classes, Submissions)</li>
+          <li>Implement Supabase Auth for professors</li>
+          <li>Establish working database connection</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><strong>Week 3-4</strong></td>
+      <td>
+        <ul>
+          <li>Code Login/SignUp pages</li>
+          <li>Class Creation page</li>
+          <li>Assignment Creation page (Title/Description)</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>Route to insert student data into DB</li>
+          <li>File parsing (extract NetID and code)</li>
+          <li>Generate 4-digit unique PINs for students</li>
+          <li>Supabase storage setup for code submissions</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><strong>Week 4-5</strong></td>
+      <td>
+        <ul>
+          <li>Drag-and-drop UI for student ZIP folders</li>
+          <li>Input validation for title/description</li>
+          <li>Handle upload state and loading UI</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>Prompt engineering for question generation (3-5 questions)</li>
+          <li>Difficulty scaling (Recursion, Runtime, Class Purpose)</li>
+          <li><b>Optimization:</b> Pre-generate question pool & pick random subsets</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><strong>Week 5-6</strong></td>
+      <td>
+        <ul>
+          <li>Student list view for assignments</li>
+          <li>Dropdowns for transcripts and recordings</li>
+          <li>Add <b>Status Column</b> (Pending, Called, Graded)</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>Twilio SendGrid email notification system</li>
+          <li>Twilio phone number setup</li>
+          <li>Call system: PIN verification & TwiML 
+          <li>Record student audio responses</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><strong>Week 7-8</strong></td>
+      <td>
+        <ul>
+          <li><b>Analytics Page:</b> Chart.js for score distribution</li>
+          <li>Final frontend/backend integration</li>
+          <li>Stretch goal implementation</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>Integrate Gemini for confidence scoring</li>
+          <li>Process Twilio STT transcripts</li>
+          <li>Stretch goal implementation</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><strong>Week 9-10</strong></td>
+      <td>
+        <ul>
+          <li>Presentation Night Prep 🎉</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>Presentation Night Prep 🎉</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ## Tech Stack & Resources
 
@@ -70,7 +199,7 @@ Grading code submissions often fail to reveal whether a student truly understand
 <details>
 <Summary>Developer Tools</Summary>
 
-- [Git]("https://git-scm.com/downloads)
+- [Git](https://git-scm.com/downloads)
 - [Node.js](https://nodejs.org/en/download)
 - [Postman](https://www.postman.com/downloads/)
 - [VS Code](https://code.visualstudio.com/)
