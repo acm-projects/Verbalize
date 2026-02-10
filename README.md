@@ -2,10 +2,10 @@
   <img src = "https://media1.tenor.com/m/33qCDJByr9kAAAAC/can-i-ask-you-a-few-questions-kyle-broflovski.gif">
 </div>
 
-# Verbalize
+# Verbalize 🎙️
 Grading code submissions often fail to reveal whether a student truly understands the underlying concepts or merely submitted an AI generated solution. Capture the full picture of student learning with Verbalize! Designed for professors, Verbalize is a web-based automated oral defense platform where students verbally explain their code logic and design choices through voice calls. It analyzes their answers to verify deep comprehension, ensuring grades reflect conceptual understanding rather than just working syntax.
 
-## MVP 
+## MVP 🏆
 * User Authentication with Signup/Signin
 * File upload system
 * Database integration for code submissions
@@ -13,12 +13,12 @@ Grading code submissions often fail to reveal whether a student truly understand
 * Notification and call system with Twilio
 * Confidence score calculation
 
-## Stretch Goals
+## Stretch Goals 🚀
 * Anti cheating system during calls
 * Conversational agent that clarifies on responses
 * ElevenLabs integration
 
-## Timeline
+## Timeline 🗓️
 
 <table align="center">
   <thead>
@@ -149,7 +149,7 @@ Grading code submissions often fail to reveal whether a student truly understand
   </tbody>
 </table>
 
-## Tech Stack & Resources
+## Tech Stack & Resources 💻
 
 <details> 
 <summary> Frontend </summary>
@@ -160,7 +160,7 @@ Grading code submissions often fail to reveal whether a student truly understand
   - [What is React?](https://www.youtube.com/watch?v=Tn6-PIqc4UM)
   - [React Foundations](https://nextjs.org/learn/react-foundations)
   - [Next.js Course](https://nextjs.org/learn?utm_source=next-site&utm_medium=homepage-cta&utm_campaign=home)
-  - [Next.js Tutorial]("https://www.youtube.com/watch?v=ZVnjOPwW4ZA")
+  - [Next.js Tutorial](https://www.youtube.com/watch?v=ZVnjOPwW4ZA)
   - [Next.js in 7 minutes](https://www.youtube.com/watch?v=xnOwOBYaA3w)
   - [Tailwind CSS Docs](https://tailwindcss.com/docs/installation/using-vite)
 </details>
@@ -182,9 +182,9 @@ Grading code submissions often fail to reveal whether a student truly understand
   - [Gemini API](https://ai.google.dev/gemini-api/docs)
   - [Groq](https://console.groq.com/docs/overview)
 
-- Twilio 
-  - [SendGrid Docs](https://www.twilio.com/docs/sendgrid)
-  - [Voice Docs](https://www.twilio.com/docs/voice)
+  - Twilio 
+    - [SendGrid Docs](https://www.twilio.com/docs/sendgrid)
+    - [Voice Docs](https://www.twilio.com/docs/voice)
 </details>
 
 
@@ -206,7 +206,7 @@ Grading code submissions often fail to reveal whether a student truly understand
   
 </details>
 
-## Roadblocks & Possible Solutions
+## Roadblocks & Possible Solutions 🚧
 
 - Question generation for each student may take too long
   - Use Groq to ensure fast response times
@@ -220,7 +220,7 @@ Grading code submissions often fail to reveal whether a student truly understand
   - If this happens, the best course would be to get some assistance from the other side until caught up.
 
 
-## Competitors
+## Competitors ⚔️
 - Verbal Check (Oral plagiarism detector, no code-specific grading)
 - MOSS (Only checks similarity between submissions)
 - TurnItIn/ZeroGPT (Does not work for code)
@@ -253,6 +253,12 @@ Grading code submissions often fail to reveal whether a student truly understand
 | git revert <commit-hash>            | Revert changes in a commit                 |
 
 
-## Team
+## Team 👥
 
+- Harshitha Mahesh
+- Lidegee Xi
+- Rupesh Senthil
+- Huy Nguyen
+- Sunay Shehaan - Project Manager
+- Bryce Duncan - Industry Mentor
 
