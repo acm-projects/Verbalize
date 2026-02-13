@@ -258,7 +258,6 @@ Grading code submissions often fail to reveal whether a student truly understand
 - Harshitha Mahesh (Harshey)
 - Lidegee Xi
 - Rupesh Senthil HELLO!!
-- Huy Nguyen
+- Huy Nguyen - Asian boi
 - Sunay Shehaan - Project Manager
 - Bryce Duncan - Industry Mentor
-
