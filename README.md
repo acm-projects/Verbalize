@@ -255,7 +255,7 @@ Grading code submissions often fail to reveal whether a student truly understand
 
 ## Team 👥
 
-- Harshitha Mahesh
+- Harshitha Mahesh (Harshey)
 - Lidegee Xi
 - Rupesh Senthil
 - Huy Nguyen
