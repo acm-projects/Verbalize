@@ -256,7 +256,7 @@ Grading code submissions often fail to reveal whether a student truly understand
 ## Team 👥
 
 - Harshitha Mahesh (Harshey)
-- Lidegee Xi
+- Lidegee Xi Manufactury
 - Rupesh Senthil HELLO!!
 - Huy Nguyen - Asian boi
 - Sunay Shehaan - Project Manager
