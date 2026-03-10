@@ -13,8 +13,9 @@ export default function AccountForm({ user }: { user: User | null }) {
 
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
-  const [fullname, setFullname] = useState<string | null>(null)
-  const [username, setUsername] = useState<string | null>(null)
+  const [firstName, setFirstName] = useState<string | null>(null)
+  const [lastName, setLastName] = useState<string | null>(null)
+  const [email, setEmail] = useState<string | null>(null)
 
   const getProfile = useCallback(async () => {
     try {
@@ -32,8 +33,9 @@ export default function AccountForm({ user }: { user: User | null }) {
       }
 
       if (data) {
-        setFullname(`${data.first_name} ${data.last_name}`)
-        setUsername(data.email)
+        setFirstName(data.first_name)
+        setLastName(data.last_name)
+        setEmail(data.email)
       }
     } catch (error) {
       alert('Error loading user data!')
@@ -68,18 +70,18 @@ export default function AccountForm({ user }: { user: User | null }) {
   }, [upsertSignedInUser, getProfile])
 
   async function updateProfile({
-    username,
+    firstName, lastName
   }: {
-    username: string | null
-    fullname: string | null
+    firstName: string | null
+    lastName: string | null
   }) {
     try {
       setLoading(true)
 
       const { error } = await supabase.from('Users').upsert({
         id: user?.id as string,
-        first_name: fullname?.split(' ')[0] || null,
-        last_name: fullname?.split(' ').slice(1).join(' ') || null,
+        first_name: firstName || null,
+        last_name: lastName || null,
         updated_at: new Date().toISOString(),
       })
       if (error) throw error
@@ -102,28 +104,28 @@ export default function AccountForm({ user }: { user: User | null }) {
         <input id="email" type="text" value={user?.email} disabled />
       </div>
       <div>
-        <label htmlFor="fullName">Full Name</label>
+        <label htmlFor="firstName">First Name</label>
         <input
-          id="fullName"
+          id="firstName"
           type="text"
-          value={fullname || ''}
-          onChange={(e) => setFullname(e.target.value)}
+          value={firstName || ''}
+          onChange={(e) => setFirstName(e.target.value)}
         />
       </div>
       <div>
-        <label htmlFor="username">Username</label>
+        <label htmlFor="lastName">Last Name</label>
         <input
-          id="username"
+          id="lastName"
           type="text"
-          value={username || ''}
-          onChange={(e) => setUsername(e.target.value)}
+          value={lastName || ''}
+          onChange={(e) => setLastName(e.target.value)}
         />
       </div>
 
       <div>
         <button
           className="button primary block"
-          onClick={() => updateProfile({ fullname, username, })}
+          onClick={() => updateProfile({ firstName, lastName })}
           disabled={loading}
         >
           {loading ? 'Loading ...' : 'Update'}

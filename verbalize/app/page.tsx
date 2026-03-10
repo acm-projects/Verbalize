@@ -1,9 +1,6 @@
-import Image from "next/image";
+// app/page.tsx
+import { redirect } from 'next/navigation';
+
 export default function Home() {
-  return (
-    <div className="min-h-screen bg-white">
-      <main className="">
-      </main>
-    </div>
-  );
+  redirect('/landing');
 }

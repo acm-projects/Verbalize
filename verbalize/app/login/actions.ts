@@ -18,6 +18,7 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
+    console.log(error)
     redirect('/error')
   }
 
@@ -28,23 +29,45 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = await createClient()
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
   const data = {
+    firstName: formData.get('firstName') as string,
+    lastName: formData.get('lastName') as string,
     email: formData.get('email') as string,
-    password: formData.get('password') as string,
+    password: formData.get('password') as string
   }
 
-  const { error } = await supabase.auth.signUp(data)
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email: data.email,
+    password: data.password,
+  })
 
-  if (error) {
-    console.log(error)
-    redirect('/error')
+  if (authError) {
+    console.error(authError)
+    throw authError
+  }
+
+  if (authData.user) {
+    const { error: dbError } = await supabase.from('Users').insert({
+      id: authData.user.id,        // <- from Auth, not from form
+      first_name: data.firstName,  // <- from form
+      last_name: data.lastName,    // <- from form
+      email: data.email,
+    })
+
+    console.log('Auth signup data:', authData)
+
+    if (dbError) {
+      console.error('Error inserting user profile:', dbError)
+      throw dbError
+    }
+
+
   }
 
   revalidatePath('/', 'layout')
   redirect('/account')
 }
+
 export async function signInWithGoogle() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
