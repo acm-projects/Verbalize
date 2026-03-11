@@ -2,11 +2,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { type User } from '@supabase/supabase-js'
-
+import { useRouter } from 'next/navigation'
 // ...
 
 export default function AccountForm({ user }: { user: User | null }) {
   const supabase = createClient()
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [fullname, setFullname] = useState<string | null>(null)
   const [username, setUsername] = useState<string | null>(null)
@@ -122,6 +123,15 @@ export default function AccountForm({ user }: { user: User | null }) {
         </button>
       </div>
 
+        <div style={{ marginTop: '10px' }}>
+    <button
+      className="button block"
+      onClick={() => router.push('/student')}
+    >
+      Go to Student Page
+    </button>
+  </div>
+
       <div>
         <form action="/auth/signout" method="post">
           <button className="button block" type="submit">
@@ -130,5 +140,6 @@ export default function AccountForm({ user }: { user: User | null }) {
         </form>
       </div>
     </div>
+    
   )
 }
