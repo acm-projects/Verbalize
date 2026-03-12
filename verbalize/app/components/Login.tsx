@@ -12,13 +12,13 @@ export default function Login() {
         console.log("Password:", password);
     }
     return (
-        <div className ="overflow-hidden">
+        <div className="overflow-hidden">
             <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-3">
                 <div className="bg-white w-full max-w-md rounded-[40px] shadow-sm p-12 flex flex-col">
                     <Link href="/landing">
                         <img src={BackButton.src} alt="Back" className="size-10 hover:shadow-lg" />
                     </Link>
-                    <div className ="flex items-center flex-col">
+                    <div className="flex items-center flex-col">
                         <div className="w-20 h-20 bg-gradient-to-br from-[#407EA7] to-[#2D5A78] rounded-2xl flex items-center justify-center mb-4 text-white font-bold text-xs">
                             LOGO
                         </div>
@@ -47,9 +47,11 @@ export default function Login() {
                                 <span>Remember me</span>
                             </div>
 
-                            <button onClick={handleLogin} className="w-full active:scale-95 bg-[#4A86A8] hover:bg-[#3d6e8a] text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-[#4A86A8]/30">
-                                Verbalize →
-                            </button>
+                            <Link href="/dashboard">
+                                <button onClick={handleLogin} className="w-full active:scale-95 bg-[#4A86A8] hover:bg-[#3d6e8a] text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-[#4A86A8]/30">
+                                    Verbalize →
+                                </button>
+                            </Link>
 
                             <div className="flex justify-center gap-2 text-sm mt-4">
                                 <button className="text-gray-400 hover:underline">Forgot password?</button>
