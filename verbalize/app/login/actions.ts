@@ -22,8 +22,10 @@ export async function login(formData: FormData) {
     redirect('/error')
   }
 
-  revalidatePath('/', 'layout')
-  redirect('/account')
+  //revalidatePath('/', 'layout')
+  //redirect('/account')
+    redirect('/course')
+
 }
 
 export async function signup(formData: FormData) {
@@ -36,9 +38,17 @@ export async function signup(formData: FormData) {
     password: formData.get('password') as string
   }
 
+  //console.log('Signup form data:', data)
+
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
+    options: { 
+    data: { 
+      first_name: data.firstName,
+      last_name: data.lastName,
+    },
+  },
   })
 
   if (authError) {
@@ -48,13 +58,13 @@ export async function signup(formData: FormData) {
 
   if (authData.user) {
     const { error: dbError } = await supabase.from('Users').insert({
-      id: authData.user.id,        // <- from Auth, not from form
-      first_name: data.firstName,  // <- from form
-      last_name: data.lastName,    // <- from form
+      id: authData.user.id,        
+      first_name: data.firstName, 
+      last_name: data.lastName,    
       email: data.email,
     })
 
-    console.log('Auth signup data:', authData)
+    //console.log('Auth signup data:', authData)
 
     if (dbError) {
       console.error('Error inserting user profile:', dbError)
@@ -64,8 +74,8 @@ export async function signup(formData: FormData) {
 
   }
 
-  revalidatePath('/', 'layout')
-  redirect('/account')
+  //revalidatePath('/', 'layout')
+  redirect('/course')
 }
 
 export async function signInWithGoogle() {
@@ -87,6 +97,6 @@ export async function signInWithGoogle() {
   }
 
   if (data.url) {
-    redirect(data.url); // Go to Google
+    redirect(data.url); //Go to Google
   }
 }

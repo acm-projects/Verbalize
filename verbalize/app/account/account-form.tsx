@@ -13,9 +13,9 @@ export default function AccountForm({ user }: { user: User | null }) {
 
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
-  const [firstName, setFirstName] = useState<string | null>(null)
-  const [lastName, setLastName] = useState<string | null>(null)
-  const [email, setEmail] = useState<string | null>(null)
+  const [firstName, setFirstName] = useState<string | null>("")
+  const [lastName, setLastName] = useState<string | null>("")
+  const [email, setEmail] = useState<string | null>("")
 
   const getProfile = useCallback(async () => {
     try {
