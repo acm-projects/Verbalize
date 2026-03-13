@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import ClassroomHeader from '../addassignmentPublic';
-import DashboardSidebar from '../dashboard/dashboardSidebar'; 
+import DashboardSidebar from '../appledashboard/dashboardSidebar'; 
 
 // Mock grades data
 const gradesData = [

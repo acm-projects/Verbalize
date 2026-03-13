@@ -1,10 +1,11 @@
-import PageTransition from "../components/Transition";
+import { login, signup } from "./actions";
 import Login from "../components/Login";
+import SignInWithGoogleButton from "./signInWithGoogleButton";
 
 export default function LoginPage() {
-    return (
-        
-            <Login />
-       
-    );
+  return (
+    <div>
+      <Login />
+    </div>
+  );
 }

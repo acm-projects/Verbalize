@@ -16,7 +16,7 @@ export default function ClassroomHeader({ activePage }) {
             <div className="flex items-center gap-8 relative">
               
               {/* Left arrow always returns to the Dashboard */}
-              <Link href="/dashboard" className="text-white transition-all duration-300 ease-out hover:-translate-x-2 cursor-pointer block group relative">
+              <Link href="/appledashboard" className="text-white transition-all duration-300 ease-out hover:-translate-x-2 cursor-pointer block group relative">
                 {/* Add an outer halo that only appears on hover */}
               <div className="absolute inset-[-8px] bg-white/0 group-hover:bg-white/10 rounded-full transition-colors duration-300"></div>
 

@@ -1,6 +1,6 @@
 "use client";
 import ClassroomHeader from '../addassignmentPublic';
-import DashboardSidebar from '../dashboard/dashboardSidebar';
+import DashboardSidebar from '../appledashboard/dashboardSidebar';
 // 1. Mock student data
 const studentsData = [
   { id: 1, lastName: "nguyen", firstName: "nguyen", netId: "abc123", aiEval: "A" },

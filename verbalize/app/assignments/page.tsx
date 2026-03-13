@@ -3,7 +3,7 @@ import { useState } from 'react';
 // Import the top Header common component
 import ClassroomHeader from '../addassignmentPublic'; 
 // Import the AI sidebar component
-import DashboardSidebar from '../dashboard/dashboardSidebar';
+import DashboardSidebar from '../appledashboard/dashboardSidebar';
 
 export default function AssignmentsPage() {
   
