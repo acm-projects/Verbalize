@@ -8,5 +8,25 @@ export default async function Account() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  return <AccountForm user={user} />
+  const { data: students, error } = await supabase
+    .from("Students")
+    .select("*")
+
+  if (error) {
+    console.error(error)
+  }
+
+  console.log(students)
+
+  return (
+    <>
+      <AccountForm user={user} />
+      <div>
+        <h2>Students</h2>
+        {students?.map((student) => (
+          <p key={student.id}>{student.name}</p>
+        ))}
+      </div>
+    </>
+  )
 }

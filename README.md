@@ -179,6 +179,7 @@ Grading code submissions often fail to reveal whether a student truly understand
   - [User Auth with Supabase](https://supabase.com/docs/guides/auth)
 - APIs
   - [Building APIs with Next.js](https://nextjs.org/blog/building-apis-with-nextjs)
+  - [Working with APIs through Postman](https://youtu.be/MFxk5BZulVU)
   - [Gemini API](https://ai.google.dev/gemini-api/docs)
   - [Groq](https://console.groq.com/docs/overview)
 

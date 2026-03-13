@@ -2,27 +2,30 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { type User } from '@supabase/supabase-js'
-import { useRouter } from 'next/navigation'
+
 // ...
 
 export default function AccountForm({ user }: { user: User | null }) {
+
+  if (!user) {
+  return <div>Please log in</div>
+  }
+
   const supabase = createClient()
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [fullname, setFullname] = useState<string | null>(null)
-  const [username, setUsername] = useState<string | null>(null)
-  const [website, setWebsite] = useState<string | null>(null)
-  const [avatar_url, setAvatarUrl] = useState<string | null>(null)
+  const [firstName, setFirstName] = useState<string | null>(null)
+  const [lastName, setLastName] = useState<string | null>(null)
+  const [email, setEmail] = useState<string | null>(null)
 
   const getProfile = useCallback(async () => {
     try {
       setLoading(true)
 
       const { data, error, status } = await supabase
-        .from('profiles')
-        .select(`full_name, username, website, avatar_url`)
+        .from('Users')
+        .select(`first_name, last_name, email`)
         .eq('id', user?.id)
-        .single()
+        .maybeSingle()
 
       if (error && status !== 406) {
         console.log(error)
@@ -30,10 +33,9 @@ export default function AccountForm({ user }: { user: User | null }) {
       }
 
       if (data) {
-        setFullname(data.full_name)
-        setUsername(data.username)
-        setWebsite(data.website)
-        setAvatarUrl(data.avatar_url)
+        setFirstName(data.first_name)
+        setLastName(data.last_name)
+        setEmail(data.email)
       }
     } catch (error) {
       alert('Error loading user data!')
@@ -46,25 +48,40 @@ export default function AccountForm({ user }: { user: User | null }) {
     getProfile()
   }, [user, getProfile])
 
+  const upsertSignedInUser = useCallback(async () => {
+    try {
+      setLoading(true)
+      await supabase.from('Users').upsert({
+        id: user.id,
+        first_name: user.user_metadata?.first_name || null,
+        last_name: user.user_metadata?.last_name || null,
+        email: user.email,
+        updated_at: new Date().toISOString(),
+      })
+    } catch (error) {
+      console.error('Error upserting signed-in user:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase, user])
+
+  useEffect(() => {
+    upsertSignedInUser().then(() => getProfile())
+  }, [upsertSignedInUser, getProfile])
+
   async function updateProfile({
-    username,
-    website,
-    avatar_url,
+    firstName, lastName
   }: {
-    username: string | null
-    fullname: string | null
-    website: string | null
-    avatar_url: string | null
+    firstName: string | null
+    lastName: string | null
   }) {
     try {
       setLoading(true)
 
-      const { error } = await supabase.from('profiles').upsert({
+      const { error } = await supabase.from('Users').upsert({
         id: user?.id as string,
-        full_name: fullname,
-        username,
-        website,
-        avatar_url,
+        first_name: firstName || null,
+        last_name: lastName || null,
         updated_at: new Date().toISOString(),
       })
       if (error) throw error
@@ -86,51 +103,33 @@ export default function AccountForm({ user }: { user: User | null }) {
         <input id="email" type="text" value={user?.email} disabled />
       </div>
       <div>
-        <label htmlFor="fullName">Full Name</label>
+        <label htmlFor="firstName">First Name</label>
         <input
-          id="fullName"
+          id="firstName"
           type="text"
-          value={fullname || ''}
-          onChange={(e) => setFullname(e.target.value)}
+          value={firstName || ''}
+          onChange={(e) => setFirstName(e.target.value)}
         />
       </div>
       <div>
-        <label htmlFor="username">Username</label>
+        <label htmlFor="lastName">Last Name</label>
         <input
-          id="username"
+          id="lastName"
           type="text"
-          value={username || ''}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-      </div>
-      <div>
-        <label htmlFor="website">Website</label>
-        <input
-          id="website"
-          type="url"
-          value={website || ''}
-          onChange={(e) => setWebsite(e.target.value)}
+          value={lastName || ''}
+          onChange={(e) => setLastName(e.target.value)}
         />
       </div>
 
       <div>
         <button
           className="button primary block"
-          onClick={() => updateProfile({ fullname, username, website, avatar_url })}
+          onClick={() => updateProfile({ firstName, lastName })}
           disabled={loading}
         >
           {loading ? 'Loading ...' : 'Update'}
         </button>
       </div>
-
-        <div style={{ marginTop: '10px' }}>
-    <button
-      className="button block"
-      onClick={() => router.push('/student')}
-    >
-      Go to Student Page
-    </button>
-  </div>
 
       <div>
         <form action="/auth/signout" method="post">
@@ -140,6 +139,5 @@ export default function AccountForm({ user }: { user: User | null }) {
         </form>
       </div>
     </div>
-    
   )
 }
