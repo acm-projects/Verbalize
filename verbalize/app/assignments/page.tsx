@@ -1,86 +1,210 @@
 "use client";
-import { useState } from 'react';
-// Import the top Header common component
-import ClassroomHeader from '../addassignmentPublic'; 
-// Import the AI sidebar component
-import DashboardSidebar from '../appledashboard/dashboardSidebar';
+
+import { useState } from "react";
+import CreateModal from "../components/shared/CreateModal";
+import CourseLayout from "../components/course/CourseLayout";
+
+type AssignmentItem = {
+  title: string;
+  description: string;
+  status: "Active" | "Upcoming" | "Locked";
+  dueDate: string;
+  called: number;
+  total: number;
+};
+
+type AssignmentSection = {
+  title: string;
+  items: AssignmentItem[];
+};
+
+const sections: AssignmentSection[] = [
+  {
+    title: "This week",
+    items: [
+      {
+        title: "While & For loops",
+        description: "Exercise for while & for loops",
+        status: "Active",
+        dueDate: "19-02-2026",
+        called: 25,
+        total: 45,
+      },
+    ],
+  },
+  {
+    title: "Next week",
+    items: [
+      {
+        title: "Functions & Scope",
+        description: "Exercise for functions & scope",
+        status: "Upcoming",
+        dueDate: "26-02-2026",
+        called: 0,
+        total: 45,
+      },
+      {
+        title: "Arrays & Objects",
+        description: "Exercise for arrays & objects",
+        status: "Upcoming",
+        dueDate: "02-03-2026",
+        called: 0,
+        total: 45,
+      },
+    ],
+  },
+  {
+    title: "Next month",
+    items: [
+      {
+        title: "Final Project Phase 1",
+        description: "Exercise for final project phase 1",
+        status: "Locked",
+        dueDate: "15-03-2026",
+        called: 0,
+        total: 45,
+      },
+    ],
+  },
+];
+
+function getStatusStyle(status: AssignmentItem["status"]) {
+  if (status === "Active") {
+    return "bg-green-100 text-green-700";
+  }
+  if (status === "Upcoming") {
+    return "bg-yellow-100 text-yellow-700";
+  }
+  return "bg-red-100 text-red-700";
+}
+
+function getProgressWidth(called: number, total: number) {
+  if (total === 0) return "0%";
+  return `${(called / total) * 100}%`;
+}
+
+function getProgressColor(status: AssignmentItem["status"]) {
+  if (status === "Active") return "#5b92b9";
+  if (status === "Upcoming") return "#d1d5db";
+  return "#e5e7eb";
+}
 
 export default function AssignmentsPage() {
-  
-  // Keep assignmentData and periods data
-  const assignmentData = [
-    { id: 1, period: "This week", title: "While & For loops", status: "Active", date: "19-02-2026", progress: 60, count: "25/45" },
-    { id: 2, period: "Next week", title: "Functions & Scope", status: "Upcoming", date: "26-02-2026", progress: 0, count: "0/45" },
-    { id: 3, period: "Next week", title: "Arrays & Objects", status: "Upcoming", date: "02-03-2026", progress: 0, count: "0/45" },
-    { id: 4, period: "Next month", title: "Final Project Phase 1", status: "Locked", date: "15-03-2026", progress: 0, count: "0/45" },
-  ];
-  const periods = ["This week", "Next week", "Next month"];
+  const [openModal, setOpenModal] = useState(false);
 
   return (
-    // Outermost container
-    <div className="min-h-screen min-w-screen bg-[#F8FAFC] relative">
-      
-      {/* 1. Insert the left AI sidebar, fixed to the left! */}
-      
+    <>
+      <CourseLayout
+        current="assignments"
+        onAddClick={() => setOpenModal(true)}
+      >
+        <div className="h-full">
+          <div className="space-y-12 px-2 py-2">
+            {sections.map((section) => (
+              <div key={section.title}>
+                <h2 className="text-[28px] font-semibold tracking-[-0.03em] text-[#1d1d1f]">
+                  {section.title}
+                </h2>
 
-      {/* 2. Core magic: Wrap everything on the right with this div and push it 300px to the right! */}
-      <div className="flex flex-col items-center">
-        
-        {/* Top Header */}
-        <div className = "w-full">
-          <ClassroomHeader activePage="assignments"/>
-        </div>
-
-        {/* Core list content below */}
-        <main className="w-full max-w-7xl py-10 pl-10 pr-4">
-          {periods.map((period) => (
-            <section key={period} className="w-full mb-8 ">
-              <h2 className="text-xl text-black font-bold mb-6">{period}</h2>
-              
-              <div className="flex flex-col gap-4">
-                {assignmentData
-                  .filter((item) => item.period === period)
-                  .map((task) => (
-                    <div key={task.id} className={`relative flex items-center justify-between p-6 bg-white rounded-2xl shadow-sm border border-gray-100 transition-all ${task.period === 'Next month' ? 'opacity-40 grayscale-[50%] pointer-events-none' : 'opacity-100 hover:shadow-md'}`}>
-                      
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-[#5087A9]">{task.title}</h3>
-                          <span className={`text-[10px] text-white px-2 py-0.5 rounded-full font-bold ${task.status === 'Active' ? 'bg-[#86D7FF]' : 'bg-gray-300'}`}>
-                            {task.status}
+                <div className="mt-6 space-y-4">
+                  {section.items.map((item) => (
+                    <div
+                      key={item.title}
+                      className="flex items-center gap-4 rounded-[24px] border border-[#edf2f7] bg-[#fbfbfc] px-6 py-6 shadow-[0_4px_16px_rgba(15,23,42,0.04)]"
+                    >
+                      {/* left info */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-3">
+                          <h3 className="truncate text-[22px] font-semibold text-[#5c8db4]">
+                            {item.title}
+                          </h3>
+                          <span
+                            className={`rounded-full px-3 py-1 text-[13px] font-semibold ${getStatusStyle(
+                              item.status
+                            )}`}
+                          >
+                            {item.status}
                           </span>
                         </div>
-                        <p className="text-gray-400 text-sm font-medium">Exercise for {task.title.toLowerCase()}</p>
+
+                        <p className="mt-2 text-[16px] text-[#8a8f98]">
+                          {item.description}
+                        </p>
                       </div>
 
-                      <div className="flex items-center gap-12">
-                        <div className="text-center">
-                          <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Due Date</p>
-                          <p className="font-bold text-sm">📅 {task.date}</p>
+                      {/* due date */}
+                      <div className="w-[150px] shrink-0 text-center">
+                        <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#9ca3af]">
+                          Due Date
+                        </p>
+                        <div className="mt-2 flex items-center justify-center gap-2">
+                          <span className="text-[14px]">📅</span>
+                          <span className="text-[16px] font-semibold text-[#1d1d1f]">
+                            {item.dueDate}
+                          </span>
                         </div>
+                      </div>
 
-                        <div className="text-center min-w-[120px]">
-                          <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Phone Called</p>
-                          <div className="w-full bg-gray-100 h-1.5 rounded-full mb-1">
-                            <div className={`h-full rounded-full ${task.progress > 0 ? 'bg-[#5087A9]' : 'bg-gray-200'}`} style={{ width: `${task.progress}%` }}></div>
+                      {/* phone called */}
+                      <div className="w-[170px] shrink-0 text-center">
+                        <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#9ca3af]">
+                          Phone Called
+                        </p>
+
+                        <div className="mt-3">
+                          <div className="mx-auto h-[6px] w-[126px] overflow-hidden rounded-full bg-[#eceef2]">
+                            <div
+                              className="h-full rounded-full transition-all duration-300"
+                              style={{
+                                width: getProgressWidth(item.called, item.total),
+                                backgroundColor: getProgressColor(item.status),
+                              }}
+                            />
                           </div>
-                          <p className="text-[10px] font-bold">{task.count}</p>
+                          <p className="mt-2 text-[14px] font-semibold text-[#1d1d1f]">
+                            {item.called}/{item.total}
+                          </p>
                         </div>
-                        <button className="text-gray-300 font-bold text-xl ml-4 hover:text-[#5087A9]">{">"}</button>
                       </div>
-                      
-                      <div className="absolute right-[-65px] top-1/2 -translate-y-1/2 bg-[#5087A9] text-white text-[10px] px-3 py-1.5 rounded-full font-black uppercase shadow-md cursor-pointer hover:scale-110 transition-transform z-10">
-                          Email
-                      </div>
+
+                      {/* arrow */}
+                      <button
+                        type="button"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#c4c9d1] transition hover:bg-[#f2f4f7] hover:text-[#8a8f98]"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.4"
+                          className="h-5 w-5"
+                        >
+                          <path d="M9 6l6 6-6 6" />
+                        </svg>
+                      </button>
+
+                      {/* email button */}
+                      <button
+                        type="button"
+                        className="shrink-0 rounded-full bg-[#5b92b9] px-5 py-3 text-[14px] font-semibold text-white shadow-[0_8px_18px_rgba(91,146,185,0.25)] transition hover:brightness-105"
+                      >
+                        EMAIL
+                      </button>
                     </div>
                   ))}
+                </div>
               </div>
-            </section>
-          ))}
-        </main>
-      
-      </div> {/* <--- The 300px push wrapper closes here! */}
+            ))}
+          </div>
+        </div>
+      </CourseLayout>
 
-    </div>
+      <CreateModal
+        open={openModal}
+        mode="assignment"
+        onClose={() => setOpenModal(false)}
+      />
+    </>
   );
 }

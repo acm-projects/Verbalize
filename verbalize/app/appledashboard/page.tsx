@@ -1,151 +1,314 @@
-"use client"; 
-import Link from 'next/link';
-import Image from 'next/image'; 
-import { useState } from 'react';
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import CreateModal from "../components/shared/CreateModal";
 
 export default function DashboardPage() {
-  const [showModal, setShowModal] = useState(false);
+  const [openClassModal, setOpenClassModal] = useState(false);
+
+  const courses = [
+    {
+      code: "CS1200",
+      title: "Ez Programming",
+      term: "Spring 2026 · Section 01",
+      status: "Active",
+      students: 60,
+      assignments: 8,
+      pending: 12,
+      avgScore: 87,
+      submissionRate: 82,
+      gradingProgress: 60,
+    },
+    {
+      code: "CS3345",
+      title: "Data Structures",
+      term: "Spring 2026 · Section 02",
+      status: "Active",
+      students: 42,
+      assignments: 6,
+      pending: 7,
+      avgScore: 91,
+      submissionRate: 74,
+      gradingProgress: 48,
+    },
+    {
+      code: "CS4337",
+      title: "Programming Paradigms",
+      term: "Spring 2026 · Section 01",
+      status: "Active",
+      students: 38,
+      assignments: 5,
+      pending: 4,
+      avgScore: 89,
+      submissionRate: 79,
+      gradingProgress: 66,
+    },
+    {
+      code: "CS3162",
+      title: "Professional Communication",
+      term: "Spring 2026 · Section 03",
+      status: "Draft",
+      students: 28,
+      assignments: 3,
+      pending: 2,
+      avgScore: 76,
+      submissionRate: 58,
+      gradingProgress: 42,
+    },
+  ];
+
+  const getPendingStyle = (pending: number) => {
+    if (pending > 10) {
+      return "bg-red-100 text-red-700 border border-red-200";
+    }
+    return "bg-yellow-100 text-yellow-700 border border-yellow-200";
+  };
+
+  const getScoreStyle = (score: number) => {
+    if (score >= 90) {
+      return "bg-green-100 text-green-700 border border-green-200";
+    }
+    if (score >= 80) {
+      return "bg-yellow-100 text-yellow-700 border border-yellow-200";
+    }
+    return "bg-red-100 text-red-700 border border-red-200";
+  };
+
+  const getStatusStyle = (status: string) => {
+    if (status === "Active") {
+      return "bg-green-500/15 text-green-300 border border-green-400/30";
+    }
+    return "bg-red-500/15 text-red-300 border border-red-400/30";
+  };
+
+  const getProgressColor = (value: number) => {
+    if (value > 80) return "#22c55e";
+    if (value >= 60) return "#eab308";
+    return "#ef4444";
+  };
 
   return (
-    <div className="bg-[#F8FAFC]">
-      <div className={`flex h-screen transition-all duration-300 ${showModal ? 'blur-sm pointer-events-none' : ''}`}>
-        
-        {/* SIDEBAR: Switched from #262626 to a Deep Slate Blue with 50% brand depth */}
-        <aside className="w-[130px] h-screen bg-black text-white flex flex-col p-3 justify-end pb-5 z-20 shadow-2xl relative overflow-hidden border-r border-[#5087A9]/20">
-          <div className="space-y-4 font-bold pt-8 border-t border-white/10 flex flex-col items-start justify-end">
-            {/* Settings button - Uses 10% & 20% rules */}
-            <button className="w-full text-left rounded-xl flex items-center gap-2 text-white/90 hover:text-white transition-all group">
-              <div className="p-2 bg-white/10 rounded-lg group-hover:bg-white/20 transition-colors">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                </svg>
-              </div>
-              <span className="text-sm">Settings</span>
-            </button>
+    <>
+      <main className="min-h-screen bg-[linear-gradient(180deg,#6aa7d8_0px,#8fbcdf_56px,#eef4fa_220px,#f5f5f7_380px)] text-[#1d1d1f]">
+        {/* Top Nav */}
+        <header className="sticky top-0 z-50 border-b border-white/10 bg-[linear-gradient(135deg,#0b1f3a_0%,#1c4c74_45%,#5fa3d7_100%)] backdrop-blur-xl text-white">
+          <div className="mx-auto flex h-12 max-w-[1500px] items-center justify-between px-8">
+            <div className="flex min-w-[120px] items-center">
+              <div className="text-[22px] font-semibold tracking-tight">V</div>
+            </div>
 
-            {/* Logout button */}
-            <Link href="/landing">
-              <button className="w-full text-left rounded-xl flex items-center gap-2 text-white/90 hover:text-white transition-all group">
-                <div className="p-2 bg-white/10 rounded-lg group-hover:bg-red-500/20 transition-colors">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                    <polyline points="16 17 21 12 16 7"></polyline>
-                    <line x1="21" y1="12" x2="9" y2="12"></line>
+            <div className="flex flex-1 justify-center px-6">
+              <div className="w-full max-w-[520px]">
+                <div className="flex h-9 items-center gap-2 rounded-full border border-black/10 bg-[#f5f5f7] px-4 shadow-sm">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="h-4 w-4 text-[#6e6e73]"
+                  >
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-3.5-3.5" />
                   </svg>
+                  <input
+                    type="text"
+                    placeholder="Search for a class..."
+                    className="w-full bg-transparent text-[14px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none"
+                  />
                 </div>
-                <div className="text-sm">Log out</div>
-              </button>
-            </Link>
-          </div>
-        </aside>
+              </div>
+            </div>
 
-        <main className="flex-1 flex flex-col relative overflow-hidden">
-          {/* HEADER: Brighter Glass - 50% main blue with 30% overlay */}
-          <header className="h-[60px] relative flex items-center justify-between px-10 z-10 border-b border-[#5087A9]/20 bg-white/90 backdrop-blur-md">
-            <div className="absolute inset-0 bg-[#f7f9fb]" />
-            
-            <input 
-              type="text" 
-              placeholder="🔍︎ Search for classes..." 
-              className="relative w-[500px] h-[35px] rounded-xl px-6 text-slate-700 border border-[#5087A9]/30 bg-white/60 focus:bg-white transition-all outline-none text-sm shadow-sm" 
-            />
-
-            <div className="relative text-[#5087A9] font-black flex items-center gap-3 tracking-wide">
-              <div className="bg-black p-2 rounded-full border border-[#5087A9]/20">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
+            <div className="flex min-w-[120px] items-center justify-end gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-sm shadow-sm">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-4 w-4"
+                >
+                  <path d="M20 21a8 8 0 0 0-16 0" />
+                  <circle cx="12" cy="8" r="4" />
                 </svg>
               </div>
-              <span className="text-sm text-black">Professor</span>
+              <span className="hidden text-[14px] font-medium text-[#1d1d1f] sm:inline">
+                Professor
+              </span>
             </div>
-          </header>
+          </div>
+        </header>
 
-          <div className="flex-1 bg-[#F1F5F9] overflow-y-auto">
-            <div className="px-10 py-8">
-              <div className="mb-12">
-                <h2 className="text-3xl font-black text-slate-800 tracking-tight">Your Classes</h2>
-                <p className="text-sm font-medium text-slate-500 mt-1">Manage assignments and track overall performance.</p>
-              </div>
+        {/* Hero */}
+        <section className="px-6 pt-16 pb-10">
+          <div className="mx-auto max-w-[1200px] text-center">
+            <h1 className="text-5xl font-semibold tracking-[-0.04em] text-[#1d1d1f] sm:text-6xl md:text-7xl">
+              Welcome back.
+            </h1>
+            <p className="mt-4 text-xl font-normal tracking-[-0.02em] text-[#6e6e73] sm:text-2xl">
+              Please browse and select your course.
+            </p>
+            <p className="mt-3 text-[15px] text-[#86868b]">
+              Manage enrollment, assignments, grading workload, and course progress.
+            </p>
+          </div>
+        </section>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl">
-                {/* Course Card 1 - Updated with brighter gradients */}
-                <Link href="/assignments" className="block group">
-                  <div className="bg-white rounded-xl overflow-hidden transition-all duration-300 border border-slate-200 shadow-xl shadow-slate-200/50 group-hover:-translate-y-1">
-                    <div className="relative p-4 text-white overflow-hidden">
-                      {/* 50% Brand Gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#5087A9] to-[#3E6F8B]" />
-                      
-                      <div className="relative flex justify-between items-start">
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">CS1200</p>
-                          <h3 className="text-xl font-black mt-1">Ez Programming</h3>
-                        </div>
-                        <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold border border-white/30">Active</span>
-                      </div>
-                    </div>
+        {/* Cards */}
+        <section className="px-6 pb-16">
+          <div className="mx-auto max-w-[1360px]">
+            <div className="grid grid-cols-1 gap-y-6 md:grid-cols-2">
+              {courses.map((course, index) => {
+                const isRight = index % 2 === 1;
 
-                    <div className="p-4 ">
-                      <div className="grid grid-cols-4 gap-2 mb-6">
-                        {[
-                          { label: 'Students', val: '60' },
-                          { label: 'Tasks', val: '8' },
-                          { label: 'Pending', val: '12' },
-                          { label: 'Avg', val: '87%' }
-                        ].map((m, i) => (
-                          <div key={i} className="bg-slate-50 border border-slate-100 rounded-xl text-center">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">{m.label}</p>
-                            <p className="font-black text-slate-800">{m.val}</p>
+                return (
+                  <div
+                    key={index}
+                    className={isRight ? "md:ml-8" : "md:mr-4"}
+                  >
+                    <Link
+                      href="/assignments"
+                      className="block overflow-hidden rounded-[30px] border border-[#9cc9ff]/60 bg-white shadow-[0_12px_40px_rgba(51,102,153,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(51,102,153,0.16)]"
+                    >
+                      {/* top */}
+                      <div className="bg-[linear-gradient(135deg,#0b1f3a_0%,#1c4c74_45%,#5fa3d7_100%)] px-7 py-7 text-white">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-[14px] font-medium uppercase tracking-[0.08em] text-white/75">
+                              {course.code}
+                            </p>
+                            <h2 className="mt-2 text-3xl font-semibold tracking-[-0.03em]">
+                              {course.title}
+                            </h2>
+                            <p className="mt-2 text-[15px] text-white/80">{course.term}</p>
                           </div>
-                        ))}
-                      </div>
-                      
-                      {/* Progress - Uses 30% and 10% opacity rules */}
-                      <div className="space-y-4">
-                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                          <div className="h-full w-[82%] bg-[#5087A9] rounded-full shadow-[0_0_10px_rgba(80,135,169,0.3)]" />
-                        </div>
-                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                          <div className="h-full w-[60%] bg-[#5087A9]/60 rounded-full" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
 
-                {/* Create Class Card - Uses 10% dashed rule */}
-                <div
-                  onClick={() => setShowModal(true)}
-                  className="h-full rounded-xl border-2 border-dashed border-[#5087A9]/30 bg-[#5087A9]/5 hover:bg-[#5087A9]/10 cursor-pointer transition-all flex flex-col items-center justify-center text-[#5087A9] group"
+                          <span
+                            className={`rounded-full px-4 py-1.5 text-[13px] font-medium backdrop-blur-sm ${getStatusStyle(
+                              course.status
+                            )}`}
+                          >
+                            {course.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* content */}
+                      <div className="px-7 py-6">
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                          <div className="rounded-2xl border border-[#dbeafe] bg-[linear-gradient(180deg,#f8fbff_0%,#eef6ff_100%)] p-4">
+                            <p className="text-[12px] uppercase tracking-[0.08em] text-[#86868b]">
+                              Students
+                            </p>
+                            <p className="mt-2 text-2xl font-semibold">{course.students}</p>
+                          </div>
+
+                          <div className="rounded-2xl border border-[#dbeafe] bg-[linear-gradient(180deg,#f8fbff_0%,#eef6ff_100%)] p-4">
+                            <p className="text-[12px] uppercase tracking-[0.08em] text-[#86868b]">
+                              Assignments
+                            </p>
+                            <p className="mt-2 text-2xl font-semibold">{course.assignments}</p>
+                          </div>
+
+                          <div className={`rounded-2xl p-4 ${getPendingStyle(course.pending)}`}>
+                            <p className="text-[12px] uppercase tracking-[0.08em]">
+                              Pending
+                            </p>
+                            <p className="mt-2 text-2xl font-semibold">{course.pending}</p>
+                          </div>
+
+                          <div className={`rounded-2xl p-4 ${getScoreStyle(course.avgScore)}`}>
+                            <p className="text-[12px] uppercase tracking-[0.08em]">
+                              Avg Score
+                            </p>
+                            <p className="mt-2 text-2xl font-semibold">{course.avgScore}%</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-6 space-y-4">
+                          <div>
+                            <div className="mb-2 flex items-center justify-between text-[14px]">
+                              <span className="text-[#6e6e73]">Submission rate</span>
+                              <span className="font-medium text-[#1d1d1f]">
+                                {course.submissionRate}%
+                              </span>
+                            </div>
+                            <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#e5e7eb]">
+                              <div
+                                className="h-full rounded-full transition-all"
+                                style={{
+                                  width: `${course.submissionRate}%`,
+                                  backgroundColor: getProgressColor(course.submissionRate),
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="mb-2 flex items-center justify-between text-[14px]">
+                              <span className="text-[#6e6e73]">Grading progress</span>
+                              <span className="font-medium text-[#1d1d1f]">
+                                {course.gradingProgress}%
+                              </span>
+                            </div>
+                            <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#e5e7eb]">
+                              <div
+                                className="h-full rounded-full transition-all"
+                                style={{
+                                  width: `${course.gradingProgress}%`,
+                                  backgroundColor: getProgressColor(course.gradingProgress),
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-7 inline-flex h-11 items-center justify-center rounded-full bg-[#0071e3] px-6 text-[15px] font-medium text-white">
+                          View course
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })}
+
+              {/* Add class card */}
+              <div className="md:mr-4">
+                <button
+                  type="button"
+                  onClick={() => setOpenClassModal(true)}
+                  className="flex min-h-[410px] w-full flex-col items-center justify-center rounded-[30px] border border-dashed border-[#9cc9ff] bg-[linear-gradient(180deg,#fbfdff_0%,#eef6ff_100%)] text-center shadow-[0_12px_40px_rgba(51,102,153,0.07)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(51,102,153,0.12)]"
                 >
-                  <div className="size-16 rounded-xl bg-white shadow-lg shadow-[#5087A9]/10 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">+</div>
-                  <p className="mt-4 font-black text-lg">Create a class</p>
-                </div>
+                  <div className="flex h-20 w-20 items-center justify-center rounded-[24px] bg-white shadow-[0_8px_24px_rgba(51,102,153,0.12)]">
+                    <span className="text-4xl font-light text-[#0071e3]">+</span>
+                  </div>
+
+                  <h3 className="mt-6 text-3xl font-semibold tracking-[-0.03em] text-[#1d1d1f]">
+                    Add a class
+                  </h3>
+
+                  <p className="mt-3 max-w-[280px] text-[16px] text-[#6e6e73]">
+                    Create a new course space and begin managing students, assignments, and grading.
+                  </p>
+
+                  <div className="mt-8 inline-flex h-11 items-center justify-center rounded-full border border-[#0071e3] bg-white px-6 text-[15px] font-medium text-[#0071e3] transition hover:bg-[#0071e3] hover:text-white">
+                    Create class
+                  </div>
+                </button>
               </div>
             </div>
           </div>
-        </main>
-      </div>
+        </section>
+      </main>
 
-      {/* MODAL: Uses 100% white with 50% main blue accents */}
-      {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white w-[550px] rounded-[40px] p-10 shadow-2xl relative border border-white">
-            <h2 className="text-3xl font-black mb-8 text-slate-800">Add New Class</h2>
-            <div className="space-y-6">
-               <div className="flex flex-col gap-2">
-                 <label className="font-bold text-slate-600 ml-1">Class Name</label>
-                 <input type="text" className="bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:ring-4 ring-[#5087A9]/10 transition-all outline-none" />
-               </div>
-               <button className="w-full bg-[#5087A9] py-4 rounded-2xl text-white font-black shadow-lg shadow-[#5087A9]/30 hover:bg-[#3d6a87] transition-all">
-                 Initialize Course
-               </button>
-            </div>
-            <button onClick={() => setShowModal(false)} className="absolute top-8 right-8 text-slate-300 hover:text-slate-500 transition-colors">✕</button>
-          </div>
-        </div>
-      )}
-    </div>
+      <CreateModal
+        open={openClassModal}
+        mode="class"
+        onClose={() => setOpenClassModal(false)}
+      />
+    </>
   );
 }
