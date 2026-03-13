@@ -116,7 +116,7 @@ export default function AssignmentsPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-3">
                           <h3 className="truncate text-[22px] font-semibold text-[#5c8db4]">
-                            {item.title}
+                            {item.title}  
                           </h3>
                           <span
                             className={`rounded-full px-3 py-1 text-[13px] font-semibold ${getStatusStyle(
@@ -200,7 +200,7 @@ export default function AssignmentsPage() {
         </div>
       </CourseLayout>
 
-      <CreateModal
+      <CreateModal  
         open={openModal}
         mode="assignment"
         onClose={() => setOpenModal(false)}
