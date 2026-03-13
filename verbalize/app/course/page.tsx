@@ -3,10 +3,14 @@
 import { useState } from "react";
 import { StudentUploader } from '@/lib/StudentUploader'
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+
 
 
 export default function Course() {
   const supabase = createClient();
+  const router = useRouter();
+
 
   const [courseName, setCourseName] = useState("");
   const [sectionNum, setSectionNum] = useState("");
@@ -48,6 +52,9 @@ export default function Course() {
       setCourseName("");
       setSectionNum("");
       setStudentInfo("");
+      router.push(`/assignments/create?courseId=${data.id}`);
+
+      
     } catch (err: any) {
       setMessage(err.message);
     }
