@@ -6,10 +6,10 @@ import { useState } from "react";
 
 export default function Signup() {
 
-    const [name, setName] = useState("");
+    const [firstName, setFirstName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [lastname, setLastname] = useState("");
+    const [lastName, setLastName] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
 
@@ -41,14 +41,14 @@ export default function Signup() {
                                 <label className="text-gray-600 font-semibold ml-1">First Name</label>
                                 <div className="relative">
                                     <span className="absolute left-4 top-3 text-gray-400 opacity-10">👤</span>
-                                    <input name="firstName" type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4A86A8]/20 text-black"></input>
+                                    <input name="firstName" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4A86A8]/20 text-black"></input>
                                 </div>
                             </div>
                             <div>
                                 <label className="text-gray-600 font-semibold ml-1">Last Name</label>
                                 <div className="relative">
                                     <span className="absolute pl-4 pt-3 text-gray-400 opacity-13">🏢</span>
-                                    <input name="lastName" type="text" value={lastname} onChange={(e) => setLastname(e.target.value)} className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4A86A8]/20 text-black"></input>
+                                    <input name="lastName" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4A86A8]/20 text-black"></input>
                                 </div>
                             </div>
                         </div>
