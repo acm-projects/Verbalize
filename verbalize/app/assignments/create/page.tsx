@@ -56,10 +56,20 @@ export default function CreateAssignment() {
 
       const { error } = await supabase
         .from('Assignments')
-        .update({ instruction_text: aiText, submissons: zipPath })
+        .update({ instruction_text: aiText, submissions: zipPath })
         .eq('id', createdAssignmentId)
 
-      if (error) throw error
+      await fetch("/api/processSubmissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+                  zipPath,
+                  assignmentId: createdAssignmentId
+        })
+      })
+
+      if (error) { console.log(error); throw error; }
+    
       alert("Upload complete! Staying here for now.");
     } catch (e: any) {
       alert(e.message)

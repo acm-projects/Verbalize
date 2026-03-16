@@ -44,7 +44,7 @@ export default function Course() {
       }
 
       if (file) {
-        const uploader = new StudentUploader(supabase, file);
+        const uploader = new StudentUploader(supabase, file, data.id);
         await uploader.process(); // upload to storage + insert students
       }
 
