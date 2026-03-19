@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import {useRef, useState } from "react";
 import { StudentUploader } from '@/lib/StudentUploader'
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import CreateModal from "../components/shared/CreateModal";
 
 
 
 export default function Course() {
   const supabase = createClient();
   const router = useRouter();
+
+    const fileInputRef = useRef<HTMLInputElement>(null); // hidden input ref
+
 
 
   const [courseName, setCourseName] = useState("");
@@ -18,6 +22,8 @@ export default function Course() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +39,6 @@ export default function Course() {
         body: JSON.stringify({
           course_name: courseName,
           section_num: sectionNum,
-          student_info: studentInfo,
         }),
       });
 
@@ -52,6 +57,8 @@ export default function Course() {
       setCourseName("");
       setSectionNum("");
       setStudentInfo("");
+      setFile(null);
+      setIsModalOpen(false);
       router.push(`/assignments/create?courseId=${data.id}`);
 
       
@@ -63,49 +70,28 @@ export default function Course() {
   };
 
   return (
-    <div style={{ maxWidth: 500, margin: "40px auto", fontFamily: "sans-serif" }}>
-      <h1>Create Course & Upload Students</h1>
+    <div>
+      {/* Open Modal Button */}
+      <button
+        className="rounded bg-blue-500 px-4 py-2 text-white"
+        onClick={() => setIsModalOpen(true)}
+      >
+        Create Class
+      </button>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <label>Course Name</label>
-          <input
-            type="text"
-            value={courseName}
-            onChange={(e) => setCourseName(e.target.value)}
-            required
-            style={{ width: "100%", padding: 8 }}
-          />
-        </div>
-
-        <div style={{ marginBottom: 12 }}>
-          <label>Section Number</label>
-          <input
-            type="text"
-            value={sectionNum}
-            onChange={(e) => setSectionNum(e.target.value)}
-            required
-            style={{ width: "100%", padding: 8 }}
-          />
-        </div>
-
-        <div style={{ marginBottom: 12 }}>
-          <label>Upload Student CSV</label>
-          <input
-            type="file"
-            accept=".csv"
-            onChange={(e) => e.target.files && setFile(e.target.files[0])}
-            style={{ marginTop: 8 }}
-            required
-          />
-        </div>
-
-        <button type="submit" disabled={loading}>
-          {loading ? "Processing..." : "Create Course"}
-        </button>
-      </form>
-
-      {message && <p style={{ marginTop: 20 }}>{message}</p>}
+      {/* Modal */}
+      
+      <CreateModal
+        open={isModalOpen}
+        mode="class"
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmit}
+        courseName={courseName}
+        setCourseName={setCourseName}
+        sectionNum={sectionNum}
+        setSectionNum={setSectionNum}
+        file={file}
+        setFile={setFile}/>
     </div>
   );
 }
