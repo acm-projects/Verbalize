@@ -8,12 +8,14 @@ type CreateModalProps = {
   open: boolean;
   mode: "assignment" | "class";
   onClose: () => void;
+  courseId?: string; 
 };
 
 export default function CreateModal({
   open,
   mode,
   onClose,
+  courseId,
 }: CreateModalProps) {
   const supabase = createClient();
 
@@ -34,7 +36,7 @@ export default function CreateModal({
   const secondPlaceholder = isAssignment ? "DD - MM - YYYY" : "Enter class code";
   const thirdLabel = "Section";
   const thirdPlaceholder = "Enter section";
-  const fourthLabel = isAssignment ? "Assignment file" : "Student file";
+  const fourthLabel = isAssignment ? "Master ZIP file" : "Student CSV file";
 
   const resetForm = () => {
     setNameValue("");
@@ -51,13 +53,9 @@ export default function CreateModal({
   };
 
   const handleSubmit = async () => {
-    if (isAssignment) {
-      setMessage("Assignment modal UI is ready, but backend is not connected yet.");
-      return;
-    }
-
-    if (!nameValue.trim() || !sectionValue.trim() || !file) {
-      setMessage("Please fill in class name, section, and upload a CSV file.");
+    // Basic validation
+    if (!nameValue.trim() || !file) {
+      setMessage("Please fill in the required name and upload the file.");
       return;
     }
 
@@ -65,36 +63,96 @@ export default function CreateModal({
     setMessage("");
 
     try {
-        const res = await fetch("/api/course", {
+      if (isAssignment) {
+        // --- Assignment Logic: Process ZIP via Backend ---
+        if (!courseId) {
+          throw new Error("Cannot create assignment: Missing courseId.");
+        }
+
+        setMessage("Creating assignment record...");
+        
+        // 1. Insert assignment record
+        const { data: assignmentData, error: assignmentError } = await supabase
+          .from("Assignments")
+          .insert({
+            assignment_name: nameValue,
+            course_id: courseId, 
+          })
+          .select()
+          .single();
+
+        if (assignmentError) throw assignmentError;
+
+        setMessage("Uploading master ZIP file...");
+        
+        // 2. Upload ZIP to Storage
+        const zipPath = `master_zips/${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("AssignmentsBucket")
+          .upload(zipPath, file);
+
+        if (uploadError) throw uploadError;
+
+        // 3. Update database with storage path
+        await supabase
+          .from("Assignments")
+          .update({ submissions: zipPath })
+          .eq("id", assignmentData.id);
+
+        setMessage("Backend is processing student submissions...");
+
+        // 4. Trigger backend API for decompression
+        const res = await fetch("/api/processSubmissions", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            course_name: nameValue,
-            section_num: sectionValue,
-            student_info: "",
+            zipPath: zipPath,
+            assignmentId: assignmentData.id,
           }),
         });
 
-        const raw = await res.text();
-        console.log("course response status:", res.status);
-        console.log("course response body:", raw);
+        if (!res.ok) throw new Error("Backend processing failed.");
+        
+        setMessage("Assignment created successfully!");
 
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to create course");
+      } else {
+        // --- Class Logic: Process CSV via StudentUploader ---
+        if (!sectionValue.trim()) {
+          throw new Error("Please enter a section for the class.");
+        }
+
+        setMessage("Creating class...");
+        
+        // 1. Create course record via API
+        const res = await fetch("/api/course", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            course_name: nameValue,
+            section_num: sectionValue,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to create course");
+
+        setMessage("Uploading and parsing student CSV...");
+
+        // 2. Execute bulk student upload using the class ID
+        const uploader = new StudentUploader(supabase, file, data.id);
+        await uploader.process();
+
+        setMessage("Class created successfully!");
       }
 
-      const uploader = new StudentUploader(supabase, file);
-      await uploader.process();
-
-      setMessage("Course created successfully!");
-
+      // Close modal after success
       setTimeout(() => {
         handleClose();
-      }, 700);
+      }, 1000);
+
     } catch (err: any) {
-      setMessage(err?.message || "Something went wrong");
+      console.error(err);
+      setMessage(err?.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -102,116 +160,78 @@ export default function CreateModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      {/* overlay */}
-      <div
-        className="absolute inset-0 bg-white/18 backdrop-blur-md"
-        onClick={handleClose}
-      />
+      <div className="absolute inset-0 bg-white/18 backdrop-blur-md" onClick={handleClose} />
 
-      {/* modal */}
       <div className="relative z-10 w-[min(92vw,620px)] rounded-[36px] bg-white px-10 py-10 shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
-        <button
-          onClick={handleClose}
-          className="absolute right-8 top-8 text-[#c7c9cf] transition hover:text-[#8a8f98]"
-          aria-label="Close modal"
-          type="button"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            className="h-6 w-6"
-          >
+        <button onClick={handleClose} className="absolute right-8 top-8 text-[#c7c9cf] transition hover:text-[#8a8f98]">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-6 w-6">
             <path d="M18 6 6 18" />
             <path d="m6 6 12 12" />
           </svg>
         </button>
 
-        <h2 className="text-[28px] font-semibold tracking-[-0.03em] text-[#1f2a44]">
-          {title}
-        </h2>
+        <h2 className="text-[28px] font-semibold tracking-[-0.03em] text-[#1f2a44]">{title}</h2>
 
         <div className="mt-8 space-y-6">
-          {/* name */}
           <div>
-            <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
-              {nameLabel}
-            </label>
+            <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">{nameLabel}</label>
             <input
               type="text"
               value={nameValue}
               onChange={(e) => setNameValue(e.target.value)}
               className="h-14 w-full rounded-[16px] bg-[#f3f4f6] px-5 text-[16px] outline-none placeholder:text-[#9ca3af]"
               placeholder={nameLabel}
+              disabled={loading}
             />
           </div>
 
-          {/* second + section */}
           <div className="grid grid-cols-2 gap-5">
             <div>
-              <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
-                {secondLabel}
-              </label>
+              <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">{secondLabel}</label>
               <input
                 type="text"
                 value={secondValue}
                 onChange={(e) => setSecondValue(e.target.value)}
                 className="h-14 w-full rounded-[16px] bg-[#f3f4f6] px-5 text-[16px] outline-none placeholder:text-[#9ca3af]"
                 placeholder={secondPlaceholder}
+                disabled={loading}
               />
             </div>
 
-            <div>
-              <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
-                {thirdLabel}
-              </label>
-              <input
-                type="text"
-                value={sectionValue}
-                onChange={(e) => setSectionValue(e.target.value)}
-                className="h-14 w-full rounded-[16px] bg-[#f3f4f6] px-5 text-[16px] outline-none placeholder:text-[#9ca3af]"
-                placeholder={thirdPlaceholder}
-              />
-            </div>
+            {!isAssignment && (
+              <div>
+                <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">{thirdLabel}</label>
+                <input
+                  type="text"
+                  value={sectionValue}
+                  onChange={(e) => setSectionValue(e.target.value)}
+                  className="h-14 w-full rounded-[16px] bg-[#f3f4f6] px-5 text-[16px] outline-none placeholder:text-[#9ca3af]"
+                  placeholder={thirdPlaceholder}
+                  disabled={loading}
+                />
+              </div>
+            )}
           </div>
 
-          {/* file */}
           <div>
-            <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
-              {fourthLabel}
-            </label>
-
+            <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">{fourthLabel}</label>
             <label className="flex h-14 w-full cursor-pointer items-center justify-center rounded-[16px] bg-[#f3f4f6] px-4 text-[16px] text-[#9ca3af] transition hover:bg-[#eceef2]">
-              <span className="truncate">
-                {file ? file.name : isAssignment ? "Upload file" : "Upload CSV file"}
-              </span>
+              <span className="truncate">{file ? file.name : `Upload ${isAssignment ? '.zip' : '.csv'} file`}</span>
               <input
                 type="file"
-                accept={isAssignment ? undefined : ".csv"}
+                accept={isAssignment ? ".zip" : ".csv"}
                 className="hidden"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    setFile(e.target.files[0]);
-                  }
-                }}
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                disabled={loading}
               />
             </label>
           </div>
 
-          {message && (
-            <p className="text-[14px] font-medium text-[#5f6672]">{message}</p>
-          )}
+          {message && <p className="text-[14px] font-medium text-[#5f6672]">{message}</p>}
         </div>
 
-        {/* footer */}
         <div className="mt-8 flex items-center justify-end gap-4">
-          <button
-            onClick={handleClose}
-            type="button"
-            className="rounded-full px-5 py-3 text-[16px] font-semibold text-[#8a8f98] transition hover:text-[#5f6672]"
-          >
+          <button onClick={handleClose} type="button" className="rounded-full px-5 py-3 text-[16px] font-semibold text-[#8a8f98] transition hover:text-[#5f6672]">
             Cancel
           </button>
 
