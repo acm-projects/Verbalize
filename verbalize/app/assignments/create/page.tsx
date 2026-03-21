@@ -1,8 +1,10 @@
 'use client'
 
+
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
+
 
 export default function CreateAssignment() {
   const searchParams = useSearchParams()
@@ -15,6 +17,7 @@ export default function CreateAssignment() {
   const [createdAssignmentId, setCreatedAssignmentId] = useState<string | null>(null)
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [zipFile, setZipFile] = useState<File | null>(null)
+  
 
   const extractText = async (file: File) => {
     const pdfjs = await import('pdfjs-dist')
@@ -56,16 +59,28 @@ export default function CreateAssignment() {
 
       const { error } = await supabase
         .from('Assignments')
-        .update({ instruction_text: aiText, submissons: zipPath })
+        .update({ instruction_text: aiText, submissions: zipPath })
         .eq('id', createdAssignmentId)
 
       if (error) throw error
       alert("Upload complete! Staying here for now.");
+      const aiResponse = await fetch("/api/generate-questions", {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          assignmentId: createdAssignmentId, 
+          instructionText: aiText 
+        }),
+      });
+
+      if (!aiResponse.ok) throw new Error("AI Question generation failed.");
+
+      alert("Full Success! PDF stored, ZIP uploaded, and 20 AI questions generated.");
     } catch (e: any) {
       alert(e.message)
     }
   }
-
+  
   return (
     <div style={{ padding: '40px' }}>
       <h1>New Assignment (Course: {courseId})</h1>
