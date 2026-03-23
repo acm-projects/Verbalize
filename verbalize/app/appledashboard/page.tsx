@@ -1,96 +1,50 @@
 "use client";
 
+import { useEffect } from "react";
+import { createClient } from "@/lib/supabase/client"; 
+
 import Link from "next/link";
 import { useState } from "react";
 import CreateModal from "../components/shared/CreateModal";
 
 export default function DashboardPage() {
   const [openClassModal, setOpenClassModal] = useState(false);
-  const [courseName, setCourseName] = useState("");
-  const [sectionNum, setSectionNum] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [courses, setCourses] = useState<any[]>([]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  useEffect(() => {
+  const fetchCourses = async () => {
+    const supabase = await createClient(); 
 
-  try {
-    const res = await fetch("/api/course", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        course_name: courseName,
-        section_num: sectionNum,
-      }),
-    });
 
-    const data = await res.json();
+    const { data, error } = await supabase
+      .from("Course_Details")
+      .select("*");
 
-    if (!res.ok) {
-      throw new Error(data.error || "Something went wrong");
+    console.log("DATA:", data);
+    console.log("ERROR:", error);
+
+    if (error) {
+      console.error("Error fetching courses:", error);
+    } else {
+      const formattedCourses = data.map((c) => ({
+        code: `Section ${c.section_num}`, // 👈 map section → code
+        title: c.name,                    // 👈 map name → title
+        term: "Spring 2026",              // 👈 placeholder
+        status: "Active",                 // 👈 default
+        students: 0,
+        assignments: 0,
+        pending: 0,
+        avgScore: 0,
+        submissionRate: 0,
+        gradingProgress: 0,
+      }));
+
+      setCourses(formattedCourses);
     }
+  };
 
-    setOpenClassModal(false);
-
-    // OPTIONAL: refresh courses later
-    console.log("Created:", data);
-
-  } catch (err: any) {
-    console.error(err.message);
-  }
-};
-
-  const courses = [
-    {
-      code: "CS1200",
-      title: "Ez Programming",
-      term: "Spring 2026 · Section 01",
-      status: "Active",
-      students: 60,
-      assignments: 8,
-      pending: 12,
-      avgScore: 87,
-      submissionRate: 82,
-      gradingProgress: 60,
-    },
-    {
-      code: "CS3345",
-      title: "Data Structures",
-      term: "Spring 2026 · Section 02",
-      status: "Active",
-      students: 42,
-      assignments: 6,
-      pending: 7,
-      avgScore: 91,
-      submissionRate: 74,
-      gradingProgress: 48,
-    },
-    {
-      code: "CS4337",
-      title: "Programming Paradigms",
-      term: "Spring 2026 · Section 01",
-      status: "Active",
-      students: 38,
-      assignments: 5,
-      pending: 4,
-      avgScore: 89,
-      submissionRate: 79,
-      gradingProgress: 66,
-    },
-    {
-      code: "CS3162",
-      title: "Professional Communication",
-      term: "Spring 2026 · Section 03",
-      status: "Draft",
-      students: 28,
-      assignments: 3,
-      pending: 2,
-      avgScore: 76,
-      submissionRate: 58,
-      gradingProgress: 42,
-    },
-  ];
+  fetchCourses();
+}, []);
 
   const getPendingStyle = (pending: number) => {
     if (pending > 10) {
@@ -342,13 +296,6 @@ export default function DashboardPage() {
         open={openClassModal}
         mode="class"
         onClose={() => setOpenClassModal(false)}
-        onSubmit={handleSubmit}
-        courseName={courseName}
-        setCourseName={setCourseName}
-        sectionNum={sectionNum}
-        setSectionNum={setSectionNum}
-        file={file}
-        setFile={setFile}
       />
     </>
   );
