@@ -4,7 +4,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 export class StudentUploader {
   supabase: SupabaseClient;
   file: File | null;
-  courseId: string;
+  courseId: string; // must be passed in to enroll students in the correct course
 
   constructor(supabase: SupabaseClient, file: File | null = null, courseId: string) {
     this.supabase = supabase;
@@ -41,7 +41,6 @@ export class StudentUploader {
           try {
             const rows = results.data.slice(1) as string[][];
 
-            // Skip header row
             for (const row of rows) {
               const first_name = row[0];
               const last_name = row[1];
