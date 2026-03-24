@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import CreateModal from "../components/shared/CreateModal";
 import CourseLayout from "../components/course/CourseLayout";
+import { createClient } from "@/lib/supabase/client";
+import { useParams } from "next/navigation";
 
 type AssignmentItem = {
   title: string;
@@ -18,55 +20,7 @@ type AssignmentSection = {
   items: AssignmentItem[];
 };
 
-const sections: AssignmentSection[] = [
-  {
-    title: "This week",
-    items: [
-      {
-        title: "While & For loops",
-        description: "Exercise for while & for loops",
-        status: "Active",
-        dueDate: "19-02-2026",
-        called: 25,
-        total: 45,
-      },
-    ],
-  },
-  {
-    title: "Next week",
-    items: [
-      {
-        title: "Functions & Scope",
-        description: "Exercise for functions & scope",
-        status: "Upcoming",
-        dueDate: "26-02-2026",
-        called: 0,
-        total: 45,
-      },
-      {
-        title: "Arrays & Objects",
-        description: "Exercise for arrays & objects",
-        status: "Upcoming",
-        dueDate: "02-03-2026",
-        called: 0,
-        total: 45,
-      },
-    ],
-  },
-  {
-    title: "Next month",
-    items: [
-      {
-        title: "Final Project Phase 1",
-        description: "Exercise for final project phase 1",
-        status: "Locked",
-        dueDate: "15-03-2026",
-        called: 0,
-        total: 45,
-      },
-    ],
-  },
-];
+
 
 function getStatusStyle(status: AssignmentItem["status"]) {
   if (status === "Active") {
@@ -90,7 +44,49 @@ function getProgressColor(status: AssignmentItem["status"]) {
 }
 
 export default function AssignmentsPage() {
+  const supabase = createClient();
+
   const [openModal, setOpenModal] = useState(false);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const params = useParams();
+  const courseId = Number(params.courseId);
+
+  useEffect(() => {
+  const fetchAssignments = async () => {
+    const { data, error } = await supabase
+      .from("Assignments")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+    } else {
+      setAssignments(data || []);
+    }
+
+    setLoading(false);
+  };
+
+  fetchAssignments();
+}, []);
+
+const sections = [
+  {
+    title: "All Assignments",
+    items: assignments.map((a) => ({
+      title: a.assignment_name,
+      description: a.instruction_text || "No description",
+      status: "Active" as const,      
+      dueDate: a.created_at
+        ? new Date(a.created_at).toLocaleDateString()
+        : "N/A",
+      called: 0,
+      total: 0,
+    })),
+  },
+];
 
   return (
     <>
@@ -203,6 +199,7 @@ export default function AssignmentsPage() {
       <CreateModal  
         open={openModal}
         mode="assignment"
+        courseId={53}
         onClose={() => setOpenModal(false)}
       />
     </>

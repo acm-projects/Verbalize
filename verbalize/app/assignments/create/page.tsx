@@ -3,15 +3,15 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 
 
 export default function CreateAssignment() {
-  const searchParams = useSearchParams()
   const router = useRouter()
   const supabase = createClient()
+  const params = useParams();
+  const courseId = Number(params.courseId);
   
-  const courseId = searchParams.get('courseId') 
 
   const [assignmentName, setAssignmentName] = useState('')
   const [createdAssignmentId, setCreatedAssignmentId] = useState<string | null>(null)

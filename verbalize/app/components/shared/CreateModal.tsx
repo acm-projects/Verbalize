@@ -8,7 +8,7 @@ type CreateModalProps = {
   open: boolean;
   mode: "assignment" | "class";
   onClose: () => void;
-  courseId?: string; 
+  courseId?: number; 
 };
 
 export default function CreateModal({
@@ -25,6 +25,7 @@ export default function CreateModal({
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
 
   if (!open) return null;
 
@@ -52,6 +53,24 @@ export default function CreateModal({
     onClose();
   };
 
+  const extractText = async (file: File) => {
+    const pdfjs = await import('pdfjs-dist');
+    pdfjs.GlobalWorkerOptions.workerSrc =
+      `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map((item: any) => item.str).join(' ') + '\n';
+    }
+
+    return text;
+};
+
   const handleSubmit = async () => {
     // Basic validation
     if (!nameValue.trim() || !file) {
@@ -64,55 +83,68 @@ export default function CreateModal({
 
     try {
       if (isAssignment) {
-        // --- Assignment Logic: Process ZIP via Backend ---
-        if (!courseId) {
-          throw new Error("Cannot create assignment: Missing courseId.");
-        }
+        if (!courseId) throw new Error("Missing courseId");
+        if (!pdfFile) throw new Error("Please upload a PDF file");
 
-        setMessage("Creating assignment record...");
-        
-        // 1. Insert assignment record
-        const { data: assignmentData, error: assignmentError } = await supabase
+        setMessage("Creating assignment...");
+
+        // 1. Create assignment
+        const { data: assignmentData, error } = await supabase
           .from("Assignments")
           .insert({
             assignment_name: nameValue,
-            course_id: courseId, 
+            course_id: courseId,
           })
           .select()
           .single();
 
-        if (assignmentError) throw assignmentError;
+        if (error) throw error;
 
-        setMessage("Uploading master ZIP file...");
-        
-        // 2. Upload ZIP to Storage
+        const assignmentId = assignmentData.id;
+
+        // 2. Extract text from PDF
+        setMessage("Reading PDF...");
+        const aiText = await extractText(pdfFile);
+
+        // 3. Upload files
+        setMessage("Uploading files...");
         const zipPath = `master_zips/${Date.now()}-${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from("AssignmentsBucket")
-          .upload(zipPath, file);
+        const pdfPath = `pdf_instruction/${Date.now()}-${pdfFile.name}`;
 
-        if (uploadError) throw uploadError;
+        await supabase.storage.from("AssignmentsBucket").upload(zipPath, file);
+        await supabase.storage.from("AssignmentsBucket").upload(pdfPath, pdfFile);
 
-        // 3. Update database with storage path
+        // 4. Update DB
         await supabase
           .from("Assignments")
-          .update({ submissions: zipPath })
-          .eq("id", assignmentData.id);
+          .update({
+            instruction_text: aiText,
+            submissions: zipPath,
+          })
+          .eq("id", assignmentId);
 
-        setMessage("Backend is processing student submissions...");
-
-        // 4. Trigger backend API for decompression
-        const res = await fetch("/api/processSubmissions", {
+        // 5. Process submissions
+        setMessage("Processing submissions...");
+        await fetch("/api/processSubmissions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            zipPath: zipPath,
-            assignmentId: assignmentData.id,
+            zipPath,
+            assignmentId,
           }),
         });
 
-        if (!res.ok) throw new Error("Backend processing failed.");
-        
+        // 6. Generate AI questions
+        setMessage("Generating AI questions...");
+        await fetch("/api/generate-questions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            assignmentId,
+            instructionText: aiText,
+          }),
+        });
+
         setMessage("Assignment created successfully!");
 
       } else {
@@ -225,6 +257,25 @@ export default function CreateModal({
                 disabled={loading}
               />
             </label>
+          </div>
+
+        <div>
+        {isAssignment && (<div>
+            <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
+              Instruction PDF
+            </label>
+            <label className="flex h-14 w-full cursor-pointer items-center justify-center rounded-[16px] bg-[#f3f4f6] px-4 text-[16px] text-[#9ca3af]">
+              <span className="truncate">
+                {pdfFile ? pdfFile.name : "Upload .pdf file"}
+              </span>
+              <input
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+              />
+            </label>
+          </div>)}
           </div>
 
           {message && <p className="text-[14px] font-medium text-[#5f6672]">{message}</p>}
