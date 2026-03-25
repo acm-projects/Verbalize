@@ -18,9 +18,9 @@ export default function CourseLayout({
   onAddClick,
 }: CourseLayoutProps) {
   const itemBase =
-    "relative pb-2 text-[16px] font-semibold transition-colors duration-200";
-  const activeItem = "text-white";
-  const inactiveItem = "text-white/55 hover:text-white/85";
+    "relative pt-2 pb-2 text-[15px] font-semibold transition-colors duration-200";
+  const activeItem = "text-[#407EA7]";
+  const inactiveItem = "text-[#407EA7]/55 hover:text-[#407EA7]/85";
 
   const getNeighbors = () => {
     if (current === "assignments") {
@@ -56,19 +56,15 @@ export default function CourseLayout({
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#6aa7d8_0px,#8fbcdf_56px,#eef4fa_220px,#f5f5f7_380px)] text-[#1d1d1f]">
       {/* Single top nav */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[linear-gradient(135deg,#0b1f3a_0%,#1c4c74_45%,#5fa3d7_100%)] backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between px-8">
-          {/* Left */}
-          <div className="flex min-w-[120px] items-center">
-            <Link
-              href="/appledashboard"
-              className="text-[22px] font-semibold tracking-tight text-white"
-            >
-              V
-            </Link>
-          </div>
+      <header className="sticky top-0 z-50 border-b border-[#407EA7]/10 bg-white backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-8">
+          <Link href = "/appledashboard">
+            <div className="flex items-center gap-3">
+              <div className="size-8 bg-[#407EA7] rounded-lg shadow-lg shadow-[#407EA7]/20 flex items-center justify-center text-white font-bold">V</div>
+              <span className="text-xl font-bold tracking-tight text-slate-800">Verbalize</span>
+            </div>
+          </Link>
 
-          {/* Middle nav replaces search bar */}
           <div className="flex flex-1 justify-center px-6">
             <nav className="flex w-full max-w-[900px] items-center justify-between">
               <Link
@@ -80,37 +76,34 @@ export default function CourseLayout({
 
               <Link
                 href="/assignments"
-                className={`${itemBase} ${
-                  current === "assignments" ? activeItem : inactiveItem
-                }`}
+                className={`${itemBase} ${current === "assignments" ? activeItem : inactiveItem
+                  }`}
               >
                 Assignments
                 {current === "assignments" && (
-                  <span className="absolute left-0 bottom-0 h-[4px] w-full rounded-full bg-white" />
+                  <span className="absolute left-0 bottom-0 h-[4px] w-full rounded-full bg-[#407EA7]" />
                 )}
               </Link>
 
               <Link
                 href="/students"
-                className={`${itemBase} ${
-                  current === "students" ? activeItem : inactiveItem
-                }`}
+                className={`${itemBase} ${current === "students" ? activeItem : inactiveItem
+                  }`}
               >
                 Students
                 {current === "students" && (
-                  <span className="absolute left-0 bottom-0 h-[4px] w-full rounded-full bg-white" />
+                  <span className="absolute left-0 bottom-0 h-[4px] w-full rounded-full bg-[#407EA7]" />
                 )}
               </Link>
 
               <Link
                 href="/grades"
-                className={`${itemBase} ${
-                  current === "grades" ? activeItem : inactiveItem
-                }`}
+                className={`${itemBase} ${current === "grades" ? activeItem : inactiveItem
+                  }`}
               >
                 Grades
                 {current === "grades" && (
-                  <span className="absolute left-0 bottom-0 h-[4px] w-full rounded-full bg-white" />
+                  <span className="absolute left-0 bottom-0 h-[4px] w-full rounded-full bg-[#407EA7]" />
                 )}
               </Link>
 
@@ -124,37 +117,21 @@ export default function CourseLayout({
             </nav>
           </div>
 
-          {/* Right */}
-          <div className="flex min-w-[140px] items-center justify-end gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#1d1d1f"
-                strokeWidth="1.8"
-                className="h-4 w-4"
-              >
-                <path d="M20 21a8 8 0 0 0-16 0" />
-                <circle cx="12" cy="8" r="4" />
-              </svg>
+          <div className="flex items-center gap-4">
+            <div className="h-9 w-9 rounded-full bg-black border border-[#407EA7]/20 flex items-center justify-center text-white">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
             </div>
-            <span className="text-[15px] font-medium text-white">Professor</span>
           </div>
         </div>
       </header>
 
       {/* Page content area */}
-      <section className="mx-auto mt-6 grid max-w-[1720px] grid-cols-[112px_minmax(0,1fr)_112px] gap-3 px-0">
-        <SidePlate label={left.label} href={left.href} side="left">
-          <PreviewShape type={left.type} side="left" />
-        </SidePlate>
+      <section className="px-20 mt-6  max-w-[1720px]  gap-3">
+        
 
         <CoursePlate>{children}</CoursePlate>
 
-        <SidePlate label={right.label} href={right.href} side="right">
-          <PreviewShape type={right.type} side="right" />
-        </SidePlate>
+        
       </section>
     </main>
   );
@@ -178,16 +155,15 @@ function SidePlate({
       aria-label={`Go to ${label}`}
     >
       <div
-        className={`h-full overflow-hidden rounded-[26px] opacity-75 blur-[2px] transition duration-300 group-hover:opacity-90 group-hover:blur-[1px] ${
-          side === "left"
+        className={`h-full overflow-hidden rounded-[26px] opacity-75 blur-[2px] transition duration-300 group-hover:opacity-90 group-hover:blur-[1px] ${side === "left"
             ? "[transform:perspective(1200px)_rotateY(16deg)_scale(0.96)] origin-left"
             : "[transform:perspective(1200px)_rotateY(-16deg)_scale(0.96)] origin-right"
-        }`}
+          }`}
       >
         {children}
       </div>
 
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/78 px-4 py-2 text-sm font-semibold text-[#425b74] shadow-sm backdrop-blur-md transition group-hover:bg-white/90">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full bg-white/78 px-4 py-2 text-sm font-semibold text-[#425b74] shadow-sm backdrop-blur-md transition group-hover:bg-white/90">
         {label}
       </div>
     </Link>

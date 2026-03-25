@@ -138,9 +138,9 @@ export default function GradesPage() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[22px] border border-[#edf2f7]">
+          <div className="overflow-hidden rounded-xl border border-[#edf2f7]">
             {/* header */}
-            <div className="grid grid-cols-[46px_1.1fr_1.1fr_1fr_1.2fr_1.1fr_0.9fr_54px] items-center gap-4 bg-[#f3f4f6] px-5 py-5 text-[15px] font-semibold text-[#1f2a44]">
+            <div className="grid grid-cols-[46px_1.1fr_1.1fr_1fr_1.2fr_1.1fr_0.9fr_54px] items-center gap-4 bg-[#f3f4f6] px-5 py-5 text-[14px] font-semibold text-[#1f2a44]">
               <div />
               <div>Last Name</div>
               <div>First Name</div>
@@ -160,11 +160,11 @@ export default function GradesPage() {
                   return (
                     <div key={`${student.netId}-${index}`}>
                       {/* main row */}
-                      <div className="grid grid-cols-[46px_1.1fr_1.1fr_1fr_1.2fr_1.1fr_0.9fr_54px] items-center gap-4 rounded-[18px] border border-sky-200 px-4 py-4">
+                      <div className="grid grid-cols-[46px_1.1fr_1.1fr_1fr_1.2fr_1.1fr_0.9fr_54px] items-center gap-4 rounded-xl text-[13px] border border-sky-200 px-4 py-2">
                         <button
                           type="button"
                           onClick={() => toggleRow(index)}
-                          className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#5f93b8] text-white shadow-sm transition hover:brightness-105"
+                          className="flex h-7 w-7 items-center justify-center rounded-[10px] bg-[#5f93b8] text-white shadow-sm transition hover:brightness-105"
                           aria-label={isOpen ? "Collapse row" : "Expand row"}
                         >
                           <svg
@@ -194,7 +194,7 @@ export default function GradesPage() {
 
                         <div>
                           <span
-                            className={`rounded-full px-3 py-1 text-[13px] font-bold uppercase tracking-[0.08em] ${getStatusBadge(
+                            className={`rounded-full px-3 py-1 text-[12px] font-bold uppercase tracking-[0.08em] ${getStatusBadge(
                               student.callStatus
                             )}`}
                           >
@@ -202,7 +202,7 @@ export default function GradesPage() {
                           </span>
                         </div>
 
-                        <div className="text-[28px] font-bold text-[#111827]">
+                        <div className="text-[20px] font-bold text-[#111827]">
                           {student.avgGrade}
                         </div>
 
@@ -231,17 +231,17 @@ export default function GradesPage() {
                           {student.details.map((detail, detailIndex) => (
                             <div
                               key={`${student.netId}-${detail.name}-${detailIndex}`}
-                              className={`grid grid-cols-[1.8fr_1fr_0.9fr] items-center rounded-[16px] border-2 px-5 py-4 ${getDetailBorder(
+                              className={`grid grid-cols-[1.8fr_1fr_0.9fr] items-center rounded-xl border-1 px-5 py-2 ${getDetailBorder(
                                 detail.status
                               )}`}
                             >
-                              <div className="font-medium text-[#4b5563]">
+                              <div className="font-medium text-[#4b5563] text-[12px]">
                                 {detail.name}
                               </div>
 
                               <div>
                                 <span
-                                  className={`rounded-full px-3 py-1 text-[13px] font-bold uppercase tracking-[0.08em] ${getStatusBadge(
+                                  className={`rounded-full px-3 py-1 text-[12px] font-bold uppercase tracking-[0.08em] ${getStatusBadge(
                                     detail.status
                                   )}`}
                                 >
@@ -249,7 +249,7 @@ export default function GradesPage() {
                                 </span>
                               </div>
 
-                              <div className="text-right text-[22px] font-bold text-[#111827]">
+                              <div className="text-right text-[20px] font-bold text-[#111827]">
                                 {detail.score}
                               </div>
                             </div>

@@ -32,8 +32,8 @@ export default function StudentsPage() {
         current="students"
         onAddClick={() => setOpenModal(true)}
       >
-        <div className="overflow-hidden rounded-[22px] border border-[#edf2f7]">
-          <div className="grid grid-cols-6 gap-4 bg-[#f3f4f6] px-6 py-5 text-[15px] font-semibold text-[#1f2a44]">
+        <div className="overflow-hidden rounded-xl border border-[#edf2f7]">
+          <div className="grid grid-cols-6 gap-4 bg-[#f3f4f6] px-6 py-5 text-[14px] font-semibold text-[#1f2a44]">
             <div>Last Name</div>
             <div>First Name</div>
             <div>Net ID</div>
@@ -46,7 +46,7 @@ export default function StudentsPage() {
             {students.map((student, index) => (
               <div
                 key={index}
-                className="grid grid-cols-6 items-center gap-4 px-6 py-5 text-[16px]"
+                className="grid grid-cols-6 items-center gap-4 px-6 py-2 text-[13px]"
               >
                 <div className="font-semibold text-[#1d1d1f]">{student[0]}</div>
                 <div className="font-semibold text-[#1d1d1f]">{student[1]}</div>

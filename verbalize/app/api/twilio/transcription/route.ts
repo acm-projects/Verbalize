@@ -1,30 +1,24 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-  // 1. 解析 Twilio 异步传过来的表单数据
+  // 1. Parse the asynchronous form data sent by Twilio
   const formData = await request.formData();
   
-  // 2. 提取最核心的三个数据
-  const transcriptionText = formData.get('TranscriptionText'); // 提取出的纯文本！
-  const recordingUrl = formData.get('RecordingUrl');           // 对应的录音文件链接
-  const callSid = formData.get('CallSid');                     // 这通电话的唯一 ID
+  // 2. Extract core metadata for the student's submission
+  const transcriptionText = formData.get('TranscriptionText'); // The converted text
+  const recordingUrl = formData.get('RecordingUrl');           // Link to the audio file
+  const callSid = formData.get('CallSid');                     // Unique ID for this specific call
 
-  // 3. 打印到控制台（这里就是你未来对接后端的发力点）
-  console.log('--- 收到新的语音转文本 (Transcript) ---');
-  console.log(`[电话 ID]: ${callSid}`);
-  console.log(`[录音链接]: ${recordingUrl}`);
-  console.log(`[学生回答]: ${transcriptionText}`);
-  console.log('---------------------------------------');
+  // 3. Log data to the terminal (This is where we connect to Supabase later)
+  console.log('--- New Transcript Received ---');
+  console.log(`[Call SID]: ${callSid}`);
+  console.log(`[Audio URL]: ${recordingUrl}`);
+  console.log(`[Student Response]: ${transcriptionText}`);
+  console.log('-------------------------------');
 
-  // 未来真实场景的代码类似这样：
-  /*
-  await supabase.from('submissions').update({
-      transcript: transcriptionText,
-      audio_url: recordingUrl
-  }).eq('call_sid', callSid);
-  */
 
-  // 4. 回复 Twilio 200 OK
-  // 注意：这个接口不需要返回 XML，因为它是后台异步触发的，不影响电话那头的声音
+  // 4. Return a 200 OK to Twilio
+  // NOTE: This endpoint does NOT need to return TwiML/XML because it's an 
+  // asynchronous background process that doesn't affect the live call audio.
   return new NextResponse('OK', { status: 200 });
 }

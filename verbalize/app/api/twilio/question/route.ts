@@ -2,15 +2,33 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   const url = new URL(request.url);
-  const nextQuestion = url.searchParams.get('next'); // 获取 URL 里的 ?next=2
+  const nextStep = url.searchParams.get('next'); 
   
-  // Twilio 会在 formData 里传来上一题的录音文件 URL (RecordingUrl)
+
   const formData = await request.formData();
   const recordingUrl = formData.get('RecordingUrl');
-  console.log(`[第一题录音地址]: ${recordingUrl}`); // 你可以把这个存进数据库
+  if (recordingUrl) {
+    console.log(`[Twilio Log] last record URL: ${recordingUrl}`);
+  }
 
-  if (nextQuestion === '2') {
-    // 问第二题
+
+  if (nextStep === '1') {
+    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+    <Response>
+        <Say voice="Polly.Joanna">Question 1: What is a closure in JavaScript?</Say>
+        <Record 
+            action="/api/twilio/question?next=2" 
+            timeout="5" 
+            transcribe="true" 
+            transcribeCallback="/api/twilio/transcription" 
+            playBeep="true" 
+        />
+    </Response>`;
+    return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } });
+  }
+
+  
+  if (nextStep === '2') {
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
     <Response>
         <Say voice="Polly.Joanna">Received. Now, Question 2: Explain React Hooks.</Say>
@@ -25,8 +43,8 @@ export async function POST(request: Request) {
     return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } });
   }
 
-  if (nextQuestion === 'done') {
-    // 结束通话
+  
+  if (nextStep === 'done') {
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
     <Response>
         <Say voice="Polly.Joanna">You have completed the assignment. Thank you, and goodbye!</Say>
@@ -34,4 +52,6 @@ export async function POST(request: Request) {
     </Response>`;
     return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } });
   }
+
+  return new NextResponse('Invalid State', { status: 400 });
 }
