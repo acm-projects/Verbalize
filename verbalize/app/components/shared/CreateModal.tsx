@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 type CreateModalProps = {
   open: boolean;
   mode: "assignment" | "class";
@@ -32,7 +33,7 @@ export default function CreateModal({
       />
 
       {/* modal */}
-      <div className="relative z-10 w-[min(92vw,620px)] rounded-[36px] bg-white px-10 py-10 shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
+      <div className="relative z-10 w-[min(92vw,620px)] rounded-xl bg-white px-10 py-10 shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
         <button
           onClick={onClose}
           className="absolute right-8 top-8 text-[#c7c9cf] transition hover:text-[#8a8f98]"

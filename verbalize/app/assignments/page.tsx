@@ -99,10 +99,10 @@ export default function AssignmentsPage() {
         onAddClick={() => setOpenModal(true)}
       >
         <div className="h-full">
-          <div className="space-y-12 px-2 py-2">
+          <div className="space-y-8 px-2 py-2">
             {sections.map((section) => (
               <div key={section.title}>
-                <h2 className="text-[28px] font-semibold tracking-[-0.03em] text-[#1d1d1f]">
+                <h2 className="text-[20px] font-semibold tracking-[-0.03em] text-[#1d1d1f]">
                   {section.title}
                 </h2>
 
@@ -110,12 +110,12 @@ export default function AssignmentsPage() {
                   {section.items.map((item) => (
                     <div
                       key={item.title}
-                      className="flex items-center gap-4 rounded-[24px] border border-[#edf2f7] bg-[#fbfbfc] px-6 py-6 shadow-[0_4px_16px_rgba(15,23,42,0.04)]"
+                      className="flex items-center gap-4 rounded-xl border border-blue-200 bg-[#fbfbfc] px-4 py-4 shadow-[0_4px_16px_rgba(15,23,42,0.04)]"
                     >
                       {/* left info */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-3">
-                          <h3 className="truncate text-[22px] font-semibold text-[#5c8db4]">
+                          <h3 className="truncate text-[16px] font-semibold text-[#5c8db4]">
                             {item.title}
                           </h3>
                           <span
@@ -127,19 +127,19 @@ export default function AssignmentsPage() {
                           </span>
                         </div>
 
-                        <p className="mt-2 text-[16px] text-[#8a8f98]">
+                        <p className="mt-2 text-[14px] text-[#8a8f98]">
                           {item.description}
                         </p>
                       </div>
 
                       {/* due date */}
-                      <div className="w-[150px] shrink-0 text-center">
+                      <div className="w-[150px] mb-3 shrink-0 text-center">
                         <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#9ca3af]">
                           Due Date
                         </p>
-                        <div className="mt-2 flex items-center justify-center gap-2">
-                          <span className="text-[14px]">📅</span>
-                          <span className="text-[16px] font-semibold text-[#1d1d1f]">
+                        <div className="flex mt-2 items-center justify-center gap-2">
+                          <span className="text-[14px]">𝄜</span>
+                          <span className="text-[14px] font-semibold text-[#1d1d1f]">
                             {item.dueDate}
                           </span>
                         </div>
@@ -161,7 +161,7 @@ export default function AssignmentsPage() {
                               }}
                             />
                           </div>
-                          <p className="mt-2 text-[14px] font-semibold text-[#1d1d1f]">
+                          <p className="mt-2 text-[12px] font-semibold text-[#1d1d1f]">
                             {item.called}/{item.total}
                           </p>
                         </div>
@@ -187,7 +187,7 @@ export default function AssignmentsPage() {
                       {/* email button */}
                       <button
                         type="button"
-                        className="shrink-0 rounded-full bg-[#5b92b9] px-5 py-3 text-[14px] font-semibold text-white shadow-[0_8px_18px_rgba(91,146,185,0.25)] transition hover:brightness-105"
+                        className="shrink-0 rounded-xl bg-[#5b92b9] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_8px_18px_rgba(91,146,185,0.25)] transition hover:brightness-105"
                       >
                         EMAIL
                       </button>
