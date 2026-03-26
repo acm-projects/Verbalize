@@ -33,7 +33,7 @@ export default function Course() {
         body: JSON.stringify({
           course_name: courseName,
           section_num: sectionNum,
-          student_info: studentInfo,
+          
         }),
       });
 
