@@ -25,7 +25,7 @@ export default function CreateModal({
   const fourthLabel = isAssignment ? "Assignment file" : "Student file";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center text-black">
       {/* overlay */}
       <div
         className="absolute inset-0 bg-white/18 backdrop-blur-md"
