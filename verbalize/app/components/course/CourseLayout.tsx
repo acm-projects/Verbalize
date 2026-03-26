@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { ReactNode } from "react";
+// 引入 useParams 来获取动态路由参数
+import { useParams } from "next/navigation"; 
 import CoursePlate from "./CoursePlate";
 
 type CourseLayoutProps = {
@@ -14,19 +16,27 @@ type CourseLayoutProps = {
 export default function CourseLayout({
   current,
   children,
-  courseCode = "CS1200",
+  courseCode, // 这里去掉了默认的 "CS1200"
   onAddClick,
 }: CourseLayoutProps) {
+  
+  // 🔴 核心改动：获取当前真实的 courseId
+  const params = useParams();
+  const courseId = params?.courseId as string || "unknown";
+
   const itemBase =
     "relative pt-2 pb-2 text-[15px] font-semibold transition-colors duration-200";
   const activeItem = "text-[#407EA7]";
   const inactiveItem = "text-[#407EA7]/55 hover:text-[#407EA7]/85";
 
+  // 注意：这个 getNeighbors 函数主要是给 SidePlate 用的，
+  // 既然我们现在移除了霸道的 CoursePlate，这部分代码其实也可以以后清理掉，
+  // 但为了安全起见，我先帮你把这里的路径也修正了。
   const getNeighbors = () => {
     if (current === "assignments") {
       return {
-        left: { label: "Grades", href: "/grades", type: "grades" as const },
-        right: { label: "Students", href: "/students", type: "students" as const },
+        left: { label: "Grades", href: `/course/${courseId}/grades`, type: "grades" as const },
+        right: { label: "Students", href: `/course/${courseId}/students`, type: "students" as const },
       };
     }
 
@@ -34,18 +44,18 @@ export default function CourseLayout({
       return {
         left: {
           label: "Assignments",
-          href: "/assignments",
+          href: `/course/${courseId}/assignments`,
           type: "assignments" as const,
         },
-        right: { label: "Grades", href: "/grades", type: "grades" as const },
+        right: { label: "Grades", href: `/course/${courseId}/grades`, type: "grades" as const },
       };
     }
 
     return {
-      left: { label: "Students", href: "/students", type: "students" as const },
+      left: { label: "Students", href: `/course/${courseId}/students`, type: "students" as const },
       right: {
         label: "Assignments",
-        href: "/assignments",
+        href: `/course/${courseId}/assignments`,
         type: "assignments" as const,
       },
     };
@@ -58,7 +68,7 @@ export default function CourseLayout({
       {/* Single top nav */}
       <header className="sticky top-0 z-50 border-b border-[#407EA7]/10 bg-white backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-8">
-          <Link href = "/appledashboard">
+          <Link href="/appledashboard">
             <div className="flex items-center gap-3">
               <div className="size-8 bg-[#407EA7] rounded-lg shadow-lg shadow-[#407EA7]/20 flex items-center justify-center text-white font-bold">V</div>
               <span className="text-xl font-bold tracking-tight text-slate-800">Verbalize</span>
@@ -71,11 +81,13 @@ export default function CourseLayout({
                 href="/appledashboard"
                 className={`${itemBase} ${activeItem}`}
               >
-                Class: {courseCode}
+                {/* 🔴 如果没传 courseCode，就显示 URL 里的 courseId */}
+                Class: {courseCode || courseId}
               </Link>
 
+              {/* 🔴 核心改动：修改了 href 路径，拼接了真实的 courseId */}
               <Link
-                href="/assignments"
+                href={`/course/${courseId}/assignments`}
                 className={`${itemBase} ${current === "assignments" ? activeItem : inactiveItem
                   }`}
               >
@@ -86,7 +98,7 @@ export default function CourseLayout({
               </Link>
 
               <Link
-                href="/students"
+                href={`/course/${courseId}/students`}
                 className={`${itemBase} ${current === "students" ? activeItem : inactiveItem
                   }`}
               >
@@ -97,7 +109,7 @@ export default function CourseLayout({
               </Link>
 
               <Link
-                href="/grades"
+                href={`/course/${courseId}/grades`}
                 className={`${itemBase} ${current === "grades" ? activeItem : inactiveItem
                   }`}
               >
@@ -107,6 +119,8 @@ export default function CourseLayout({
                 )}
               </Link>
 
+              {/* 注意：你在子页面里已经重写了 Add Assignment 按钮，所以这里的其实多余了。
+                  如果不需要，你可以把它删掉。 */}
               <button
                 type="button"
                 onClick={onAddClick}
@@ -126,16 +140,19 @@ export default function CourseLayout({
       </header>
 
       {/* Page content area */}
-      <section className="px-20 mt-6  max-w-[1720px]  gap-3">
-        
-
-        <CoursePlate>{children}</CoursePlate>
-
-        
+      <section className="px-8 lg:px-20 mt-6 max-w-[1720px] mx-auto gap-3">
+        {/* 🔴 核心改动：移除了 <CoursePlate>，直接渲染 children */}
+        {children}
       </section>
     </main>
   );
 }
+
+// ============================================================================
+// 下面这些组件 (SidePlate, PreviewShape) 是 Huy 之前写给 CoursePlate 用的动画。
+// 既然我们现在不用 CoursePlate 了，这些代码其实处于“休眠”状态。
+// 我帮你原封不动地保留在这里，万一他以后还要用到，就不会报错了。
+// ============================================================================
 
 function SidePlate({
   label,
