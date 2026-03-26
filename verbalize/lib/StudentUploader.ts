@@ -73,7 +73,7 @@ export class StudentUploader {
                 student = newStudent;
               }
 
-              //Enroll student in course (join table)
+            //Enroll student in course (join table)
               const { error: enrollError } = await this.supabase
                 .from("Course_Students")
                 .insert({
@@ -90,7 +90,7 @@ export class StudentUploader {
             resolve();
           } catch (err) {
             reject(err);
-          }
+      }
         },
       });
     });

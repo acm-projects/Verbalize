@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
 
-export async function login(formData: FormData) {
+export async function login(prevState: any, formData: FormData) {
   const supabase = await createClient()
 
   // type-casting here for convenience
@@ -18,17 +18,17 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
-    console.log(error)
-    redirect('/error')
+    return { 
+      error: "Invalid email or password", 
+      code: error.status 
+    }
   }
 
-  //revalidatePath('/', 'layout')
-  //redirect('/account')
-    redirect('/course')
 
+  redirect('/appledashboard')
 }
 
-export async function signup(formData: FormData) {
+export async function signup(prevState: any, formData: FormData) {
   const supabase = await createClient()
 
   const data = {
@@ -74,8 +74,8 @@ export async function signup(formData: FormData) {
 
   }
 
-  //revalidatePath('/', 'layout')
-  redirect('/course')
+  revalidatePath('/', 'layout')
+  redirect('/login')
 }
 export async function signInWithGoogle() {
   const supabase = await createClient();

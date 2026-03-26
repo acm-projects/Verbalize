@@ -106,7 +106,7 @@ export default function LandingPage() {
                                                     .typeString('<br/>}')
                                                     .start();
                                             }}
-                                            options={{ delay: 30, cursor: '▋'}}
+                                            options={{ delay: 20, cursor: '▋'}}
                                         />
                                     </pre>
                                 </div>

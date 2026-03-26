@@ -3,15 +3,15 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 
 
 export default function CreateAssignment() {
-  const searchParams = useSearchParams()
   const router = useRouter()
   const supabase = createClient()
+  const params = useParams();
+  const courseId = Number(params.courseId);
   
-  const courseId = searchParams.get('courseId') 
 
   const [assignmentName, setAssignmentName] = useState('')
   const [createdAssignmentId, setCreatedAssignmentId] = useState<string | null>(null)
@@ -62,7 +62,17 @@ export default function CreateAssignment() {
         .update({ instruction_text: aiText, submissions: zipPath })
         .eq('id', createdAssignmentId)
 
-      if (error) throw error
+      await fetch("/api/processSubmissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+                  zipPath,
+                  assignmentId: createdAssignmentId
+        })
+      })
+
+      if (error) { console.log(error); throw error; }
+    
       alert("Upload complete! Staying here for now.");
       const aiResponse = await fetch("/api/generate-questions", {
         method: "POST", 
