@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { StudentUploader } from "@/lib/StudentUploader";
 import { createClient } from "@/lib/supabase/client";
 
@@ -37,7 +38,7 @@ export default function CreateModal({
   const secondPlaceholder = isAssignment ? "DD - MM - YYYY" : "Enter class code";
   const thirdLabel = "Section";
   const thirdPlaceholder = "Enter section";
-  const fourthLabel = isAssignment ? "Master ZIP file" : "Student CSV file";
+  const fourthLabel = isAssignment ? "Assignment file" : "Student file";
 
   const resetForm = () => {
     setNameValue("");
@@ -72,7 +73,6 @@ export default function CreateModal({
 };
 
   const handleSubmit = async () => {
-    // Basic validation
     if (!nameValue.trim() || !file) {
       setMessage("Please fill in the required name and upload the file.");
       return;
@@ -148,14 +148,12 @@ export default function CreateModal({
         setMessage("Assignment created successfully!");
 
       } else {
-        // --- Class Logic: Process CSV via StudentUploader ---
         if (!sectionValue.trim()) {
           throw new Error("Please enter a section for the class.");
         }
 
         setMessage("Creating class...");
         
-        // 1. Create course record via API
         const res = await fetch("/api/course", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -170,14 +168,12 @@ export default function CreateModal({
 
         setMessage("Uploading and parsing student CSV...");
 
-        // 2. Execute bulk student upload using the class ID
         const uploader = new StudentUploader(supabase, file, data.id);
         await uploader.process();
 
         setMessage("Class created successfully!");
       }
 
-      // Close modal after success
       setTimeout(() => {
         handleClose();
       }, 1000);
@@ -192,21 +188,35 @@ export default function CreateModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      <div className="absolute inset-0 bg-white/18 backdrop-blur-md" onClick={handleClose} />
+      {/* Overlay */}
+      <div
+        className="absolute inset-0 bg-white/18 backdrop-blur-md"
+        onClick={handleClose}
+      />
 
-      <div className="relative z-10 w-[min(92vw,620px)] rounded-[36px] bg-white px-10 py-10 shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
-        <button onClick={handleClose} className="absolute right-8 top-8 text-[#c7c9cf] transition hover:text-[#8a8f98]">
+      {/* Modal */}
+      <div className="relative z-10 w-[min(92vw,620px)] rounded-xl bg-white px-10 py-10 shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
+        <button
+          onClick={handleClose}
+          className="absolute right-8 top-8 text-[#c7c9cf] transition hover:text-[#8a8f98]"
+          aria-label="Close modal"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-6 w-6">
             <path d="M18 6 6 18" />
             <path d="m6 6 12 12" />
           </svg>
         </button>
 
-        <h2 className="text-[28px] font-semibold tracking-[-0.03em] text-[#1f2a44]">{title}</h2>
+        <h2 className="text-[28px] font-semibold tracking-[-0.03em] text-[#1f2a44]">
+          {title}
+        </h2>
 
         <div className="mt-8 space-y-6">
+          {/* Name input */}
           <div>
-            <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">{nameLabel}</label>
+            <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
+              {nameLabel}
+            </label>
             <input
               type="text"
               value={nameValue}
@@ -217,9 +227,12 @@ export default function CreateModal({
             />
           </div>
 
+          {/* Secondary inputs */}
           <div className="grid grid-cols-2 gap-5">
             <div>
-              <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">{secondLabel}</label>
+              <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
+                {secondLabel}
+              </label>
               <input
                 type="text"
                 value={secondValue}
@@ -230,9 +243,12 @@ export default function CreateModal({
               />
             </div>
 
+            {/* Section input (Class mode only) */}
             {!isAssignment && (
               <div>
-                <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">{thirdLabel}</label>
+                <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
+                  {thirdLabel}
+                </label>
                 <input
                   type="text"
                   value={sectionValue}
@@ -245,8 +261,11 @@ export default function CreateModal({
             )}
           </div>
 
+          {/* File upload */}
           <div>
-            <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">{fourthLabel}</label>
+            <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
+              {fourthLabel}
+            </label>
             <label className="flex h-14 w-full cursor-pointer items-center justify-center rounded-[16px] bg-[#f3f4f6] px-4 text-[16px] text-[#9ca3af] transition hover:bg-[#eceef2]">
               <span className="truncate">{file ? file.name : `Upload ${isAssignment ? '.zip' : '.csv'} file`}</span>
               <input
@@ -281,8 +300,13 @@ export default function CreateModal({
           {message && <p className="text-[14px] font-medium text-[#5f6672]">{message}</p>}
         </div>
 
+        {/* Footer */}
         <div className="mt-8 flex items-center justify-end gap-4">
-          <button onClick={handleClose} type="button" className="rounded-full px-5 py-3 text-[16px] font-semibold text-[#8a8f98] transition hover:text-[#5f6672]">
+          <button
+            onClick={handleClose}
+            type="button"
+            className="rounded-full px-5 py-3 text-[16px] font-semibold text-[#8a8f98] transition hover:text-[#5f6672]"
+          >
             Cancel
           </button>
 
