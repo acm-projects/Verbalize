@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-// 🔴 魔法别名路径
+
+import { useState, useEffect, use } from "react";
 import CreateModal from "@/app/components/shared/CreateModal";
 import { createClient } from "@/lib/supabase/client";
 
-// 定义真实学生数据的结构
+// student structure
 type StudentInfo = {
   id?: string;
   lastName: string;
@@ -14,45 +14,53 @@ type StudentInfo = {
   grade: string;
 };
 
-export default function StudentsPage({ params }: { params: { courseId: string } }) {
+
+export default function StudentsPage({ params }: { params: Promise<{ courseId: string }> }) {
   const [openModal, setOpenModal] = useState(false);
   
-  // 🔴 核心状态：存储从数据库拉取的真实学生
+
+  const resolvedParams = use(params);
+  const courseId = Number(resolvedParams.courseId);
+
+
   const [students, setStudents] = useState<StudentInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
     async function fetchStudents() {
-      // ⚠️ 同样注意：检查你的表名是不是叫 "Students" 或者小写的 "students"
+  
+      if (!courseId) return;
+
+      
       const { data, error } = await supabase
         .from("Students") 
         .select("*")
-        .eq("course_id", params.courseId); // 核心：只查当前课的学生
+        .eq("course_id", courseId); 
 
       if (error) {
         console.error("Error fetching students:", error);
-        // 如果报错（比如表还没建），先暂时塞点假数据让你看到 UI
+        
         setStudents(getMockStudents());
       } else if (data && data.length > 0) {
-        // 映射数据库字段
+     
         const mappedStudents = data.map((s: any) => ({
           id: s.id,
           lastName: s.last_name || s.lastName || "Unknown",
           firstName: s.first_name || s.firstName || "Unknown",
           netId: s.net_id || s.netId || "N/A",
-          grade: s.grade || "A" // 如果 AI 还没打分，默认给个 A 充场面
+          grade: s.grade || "A" 
         }));
         setStudents(mappedStudents);
       } else {
-        // 真没查到数据的情况
+       
         setStudents([]);
       }
       setLoading(false);
     }
 
     fetchStudents();
-  }, [params.courseId]);
+  }, [courseId]); 
 
   const badgeStyle = (grade: string) => {
     if (grade === "A") return "bg-green-100 text-green-700";
@@ -63,13 +71,14 @@ export default function StudentsPage({ params }: { params: { courseId: string } 
 
   return (
     <>
-      {/* 🔴 去掉了 CourseLayout，直接用满高容器 */}
+      
       <div className="h-full">
-        {/* 标题栏（为了和 Assignments, Grades 保持一致，加回来的顶部标识） */}
+        
         <div className="flex justify-between items-center px-2 py-4 border-b border-gray-100 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Students</h1>
-            <p className="text-sm text-slate-500">Course ID: {params.courseId}</p>
+           
+            <p className="text-sm text-slate-500">Course ID: {courseId}</p>
           </div>
           <button
             onClick={() => setOpenModal(true)}
@@ -143,14 +152,15 @@ export default function StudentsPage({ params }: { params: { courseId: string } 
       <CreateModal
         open={openModal}
         mode="assignment"
-        courseId={params.courseId}
+       
+        courseId={courseId}
         onClose={() => setOpenModal(false)}
       />
     </>
   );
 }
 
-// 防崩假数据，等连通了数据库就会自动被真实数据替换
+
 function getMockStudents(): StudentInfo[] {
   return [
     { lastName: "nguyen", firstName: "nguyen", netId: "abc123", grade: "A" },

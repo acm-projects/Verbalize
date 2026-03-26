@@ -18,7 +18,7 @@ export async function POST(request: Request) {
         <Say voice="Polly.Joanna">Question 1: What is a closure in JavaScript?</Say>
         <Record 
             action="/api/twilio/question?next=2" 
-            timeout="5" 
+            timeout="3" 
             transcribe="true" 
             transcribeCallback="/api/twilio/transcription" 
             playBeep="true" 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
         <Say voice="Polly.Joanna">Received. Now, Question 2: Explain React Hooks.</Say>
         <Record 
             action="/api/twilio/question?next=done" 
-            timeout="5" 
+            timeout="3" 
             transcribe="true" 
             transcribeCallback="/api/twilio/transcription" 
             playBeep="true" 
