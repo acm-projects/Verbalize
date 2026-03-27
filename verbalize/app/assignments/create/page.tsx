@@ -83,17 +83,6 @@ export default function CreateAssignment() {
         }),
       });
 
-      if (!aiResponse.ok) throw new Error("AI Question generation failed.");
-
-      await fetch("/api/processSubmissions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-                  zipPath,
-                  assignmentId: createdAssignmentId
-        })
-      })
-
       alert("Full Success! PDF stored, ZIP uploaded, and 20 AI questions generated.");
     } catch (e: any) {
       alert(e.message)
