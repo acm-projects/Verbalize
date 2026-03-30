@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
     const supabase = await createClient();
 
-    // 1. 查找属于这个作业的所有提交记录 (也就是所有学生)
+  
     const { data: submissions, error: fetchError } = await supabase
       .from("Submissions")
       .select("id, student_id")
@@ -27,36 +27,35 @@ export async function POST(req: Request) {
 
     let sentCount = 0;
 
-    // 2. 遍历每一个学生，生成 PIN 码并发邮件
     for (const sub of submissions) {
       if (!sub.student_id) continue;
 
-      // 🔴 核心搬迁与升级：去 Students 表查这个学生的真实邮箱和名字！
+     
       const { data: studentData, error: studentError } = await supabase
         .from("Students")
         .select("email, first_name, last_name")
         .eq("id", sub.student_id)
-        .single(); // 我们确信一个 ID 对应一个学生
+        .single(); 
 
-      // 如果查不到这个学生的邮箱，就跳过不发
+      
       if (studentError || !studentData || !studentData.email) {
         console.warn(`Skipping student ${sub.student_id} due to missing email.`);
         continue;
       }
 
-      // 生成随机 4 位 PIN 码
+      
       const randomPin = Math.floor(1000 + Math.random() * 9000);
 
-      // 将 PIN 码更新到数据库
+     
       await supabase
         .from("Submissions")
         .update({ pin_id: randomPin })
         .eq('id', sub.id);
 
-      // 构建邮件内容，使用真实的姓名和邮箱
+      
       const msg = {
-        to: studentData.email, // 🌟 真实的收件人邮箱！不再是 hardcode！
-        from: 'noreply@verbalize.com', // 最好换成你们真正在 SendGrid 里验证过的发件域名
+        to: studentData.email, 
+        from: 'noreply@verbalize.com', 
         subject: `Your Oral Assessment PIN Code`,
         html: `
           <div style="font-family: sans-serif; padding: 20px;">
@@ -69,7 +68,7 @@ export async function POST(req: Request) {
         `,
       };
       
-      // 发送邮件
+      
       await sgMail.send(msg);
       sentCount++;
     }
