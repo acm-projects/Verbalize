@@ -91,7 +91,7 @@ export default function CreateModal({
 
         setMessage("1/5 Creating assignment record...");
         
-        // 1. 插入数据库
+        
         const { data: assignmentData, error: assignmentError } = await supabase
           .from("Assignments")
           .insert({
