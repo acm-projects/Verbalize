@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import CreateModal from "@/app/components/shared/CreateModal";
 import { createClient } from "@/lib/supabase/client"; // 引入 Supabase
 
-// 你的类型定义保持不变
 type AssignmentDetail = {
   name: string;
   status: "Completed" | "Pending" | "Missed";
@@ -37,16 +36,12 @@ export default function GradesPage({ params }: { params: { courseId: string } })
   const [openModal, setOpenModal] = useState(false);
   const [openRows, setOpenRows] = useState<number[]>([]);
   
-  // 🔴 1. 新增：用来存真实学生数据的 State
   const [students, setStudents] = useState<StudentGrade[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
-  // 🔴 2. 新增：一进页面就去 Supabase 查当前 courseId 下的学生
   useEffect(() => {
     async function fetchStudents() {
-      // ⚠️ 这里需要根据你的实际数据库结构来调整！
-      // 假设你有一个叫 "Students" 的表，并且里面有个 course_id 字段
       const { data, error } = await supabase
         .from("Students") // <--- 填入你真实的表名！
         .select("*")
