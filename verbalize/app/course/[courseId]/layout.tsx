@@ -2,39 +2,45 @@
 
 import Link from "next/link";
 import { ReactNode } from "react";
-import { useParams } from "next/navigation"; 
+import { useParams, usePathname } from "next/navigation"; // 1. Added usePathname
 
 type CourseLayoutProps = {
-  current: "assignments" | "students" | "grades";
   children: ReactNode;
   courseCode?: string;
   onAddClick?: () => void;
 };
 
 export default function CourseLayout({
-  current,
   children,
   courseCode,
   onAddClick,
 }: CourseLayoutProps) {
   
+  const pathname = usePathname(); // 2. Hook to get the current URL path
   const params = useParams();
   const courseId = params?.courseId as string || "unknown";
+
+  // 3. Logic to determine 'current' status automatically based on the URL
+  let current: "assignments" | "students" | "grades" | "none" = "none";
+  if (pathname.includes("/assignments")) current = "assignments";
+  else if (pathname.includes("/students")) current = "students";
+  else if (pathname.includes("/grades")) current = "grades";
 
   // Base styles for navigation items
   const itemBase = "relative pt-2 pb-2 text-[15px] font-semibold transition-all duration-200";
   
   // Specific styles for Active vs Inactive
-  const activeItem = "text-[#407EA7] font-bold scale-105"; // Added bold and slight scale for emphasis
+  const activeItem = "text-[#407EA7] font-bold scale-105"; 
   const inactiveItem = "text-[#407EA7]/55 hover:text-[#407EA7]/85";
 
-  // Indicator line style
+  // Indicator line component
   const activeLine = (
     <span className="absolute left-0 bottom-0 h-[3px] w-full rounded-full bg-[#407EA7] animate-in fade-in slide-in-from-bottom-1" />
   );
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#6aa7d8_0px,#8fbcdf_56px,#eef4fa_220px,#f5f5f7_380px)] text-[#1d1d1f]">
+      {/* Single top nav */}
       <header className="sticky top-0 z-50 border-b border-[#407EA7]/10 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-8">
           <Link href="/appledashboard">
@@ -47,7 +53,7 @@ export default function CourseLayout({
           <div className="flex flex-1 justify-center px-6">
             <nav className="flex w-full max-w-[800px] items-center justify-between">
               
-              {/* Dashboard Link (Always inactive style unless you are on dashboard) */}
+              {/* Dashboard Link (Always inactive style) */}
               <Link
                 href="/appledashboard"
                 className={`${itemBase} ${inactiveItem}`}
@@ -55,7 +61,7 @@ export default function CourseLayout({
                 Class: {courseCode || courseId}
               </Link>
 
-              {/* Assignments Link */}
+              {/* Assignments Link - Auto Highlights */}
               <Link
                 href={`/course/${courseId}/assignments`}
                 className={`${itemBase} ${current === "assignments" ? activeItem : inactiveItem}`}
@@ -64,7 +70,7 @@ export default function CourseLayout({
                 {current === "assignments" && activeLine}
               </Link>
 
-              {/* Students Link */}
+              {/* Students Link - Auto Highlights */}
               <Link
                 href={`/course/${courseId}/students`}
                 className={`${itemBase} ${current === "students" ? activeItem : inactiveItem}`}
@@ -73,7 +79,7 @@ export default function CourseLayout({
                 {current === "students" && activeLine}
               </Link>
 
-              {/* Grades Link */}
+              {/* Grades Link - Auto Highlights */}
               <Link
                 href={`/course/${courseId}/grades`}
                 className={`${itemBase} ${current === "grades" ? activeItem : inactiveItem}`}
@@ -103,6 +109,7 @@ export default function CourseLayout({
         </div>
       </header>
 
+      {/* Page content area */}
       <section className="px-8 lg:px-20 mt-6 max-w-[1720px] mx-auto">
         {children}
       </section>
