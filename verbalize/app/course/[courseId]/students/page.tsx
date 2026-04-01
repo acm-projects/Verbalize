@@ -1,12 +1,11 @@
 "use client";
 
-import { use } from "react";
-import { useState, useEffect } from "react";
-// 🔴 Magic alias path
+
+import { useState, useEffect, use } from "react";
 import CreateModal from "@/app/components/shared/CreateModal";
 import { createClient } from "@/lib/supabase/client";
 
-// Define the structure for real student data
+// student structure
 type StudentInfo = {
   id?: string;
   lastName: string;
@@ -15,53 +14,53 @@ type StudentInfo = {
   grade: string;
 };
 
-// 🔴 Fix: In Next.js 15/16, params is a Promise and must be unwrapped
-export default function StudentsPage({ 
-  params: paramsPromise 
-}: { 
-  params: Promise<{ courseId: string }> 
-}) {
-  // 🔴 Fix: Unwrap the params using React's 'use' hook
-  const params = use(paramsPromise);
-  
+
+export default function StudentsPage({ params }: { params: Promise<{ courseId: string }> }) {
   const [openModal, setOpenModal] = useState(false);
   
-  // 🔴 Core State: Store real students fetched from the database
+
+  const resolvedParams = use(params);
+  const courseId = Number(resolvedParams.courseId);
+
+
   const [students, setStudents] = useState<StudentInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
     async function fetchStudents() {
-      // ⚠️ Note: Check if your table name is "Students" or lowercase "students"
+  
+      if (!courseId) return;
+
+      
       const { data, error } = await supabase
         .from("Students") 
         .select("*")
-        .eq("course_id", params.courseId); // Core: Only fetch students for the current course
+        .eq("course_id", courseId); 
 
       if (error) {
         console.error("Error fetching students:", error);
-        // If an error occurs (e.g., table not created), use mock data for the UI
+        
         setStudents(getMockStudents());
       } else if (data && data.length > 0) {
-        // Map database fields to our state structure
+     
         const mappedStudents = data.map((s: any) => ({
           id: s.id,
           lastName: s.last_name || s.lastName || "Unknown",
           firstName: s.first_name || s.firstName || "Unknown",
           netId: s.net_id || s.netId || "N/A",
-          grade: s.grade || "A" // If AI hasn't graded yet, default to A
+          grade: s.grade || "A" 
         }));
         setStudents(mappedStudents);
       } else {
-        // Case where no data was found
+       
         setStudents([]);
       }
       setLoading(false);
     }
 
     fetchStudents();
-  }, [params.courseId]);
+  }, [courseId]); 
 
   const badgeStyle = (grade: string) => {
     if (grade === "A") return "bg-green-100 text-green-700";
@@ -72,13 +71,14 @@ export default function StudentsPage({
 
   return (
     <>
-      {/* 🔴 Full-height container without CourseLayout (now handled by layout.tsx) */}
+      
       <div className="h-full">
-        {/* Header Section (re-added to maintain consistency with Assignments and Grades) */}
+        
         <div className="flex justify-between items-center px-2 py-4 border-b border-gray-100 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Students</h1>
-            <p className="text-sm text-slate-500">Course ID: {params.courseId}</p>
+           
+            <p className="text-sm text-slate-500">Course ID: {courseId}</p>
           </div>
           <button
             onClick={() => setOpenModal(true)}
@@ -152,14 +152,14 @@ export default function StudentsPage({
       <CreateModal
         open={openModal}
         mode="assignment"
-        courseId={params.courseId}
+       
+        courseId={courseId}
         onClose={() => setOpenModal(false)}
       />
     </>
   );
 }
 
-// Mock data to prevent crashes until the database connection is fully established
 function getMockStudents(): StudentInfo[] {
   return [
     { lastName: "nguyen", firstName: "nguyen", netId: "abc123", grade: "A" },

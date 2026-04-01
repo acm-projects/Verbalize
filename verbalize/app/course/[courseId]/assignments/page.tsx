@@ -1,7 +1,11 @@
 "use client";
 
+<<<<<<< HEAD
 import { use } from "react";
 import { useState, useEffect } from "react";
+=======
+import { useState, useEffect, use } from "react";
+>>>>>>> 6814727ad31de9ad8256adc1f0e8787dae68a9ee
 import CreateModal from "@/app/components/shared/CreateModal";
 import { createClient } from "@/lib/supabase/client";
 
@@ -37,29 +41,55 @@ function getProgressColor(status: AssignmentItem["status"]) {
   return "#e5e7eb";
 }
 
-export default function AssignmentsPage({ params }: { params: { courseId: string } }) {
+export default function AssignmentsPage({ params }: { params: Promise<{ courseId: string }> }) {
   const [openModal, setOpenModal] = useState(false);
-  
-  // 🔴 核心状态：存储真实作业数据
   const [sections, setSections] = useState<AssignmentSection[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
+  const resolvedParams = use(params);
+  const courseId = Number(resolvedParams.courseId);
+
+  
+  const handleSendEmail = async (assignmentId?: string) => {
+    if (!assignmentId) return alert("Assignment ID missing!");
+    
+    
+    alert("Sending PIN code emails to students... Please wait."); 
+    
+    try {
+      const res = await fetch("/api/notify-students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        
+        body: JSON.stringify({ assignmentId }), 
+      });
+
+      if (res.ok) {
+        alert("✅ Emails sent successfully with student PINs!");
+      } else {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to send emails");
+      }
+    } catch (e: any) {
+      alert("Email Error: " + e.message);
+    }
+  };
+
   useEffect(() => {
     async function fetchAssignments() {
-      // ⚠️ 注意：如果报错 404，请去 Supabase 检查表名是不是小写的 "assignments"
+      if (!courseId) return;
+
       const { data, error } = await supabase
         .from("Assignments") 
         .select("*")
-        .eq("course_id", params.courseId) // 只查当前课程的作业
+        .eq("course_id", courseId) 
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching assignments:", error);
       } else if (data) {
-        // 将数据库原始数据，映射成你这套漂亮 UI 需要的格式
         const mappedItems: AssignmentItem[] = data.map((item: any) => {
-          // 尝试把数据库的时间格式化一下，如果没有就用默认值
           const dateStr = item.created_at 
             ? new Date(item.created_at).toLocaleDateString("en-GB").replace(/\//g, "-") 
             : "TBD";
@@ -67,36 +97,31 @@ export default function AssignmentsPage({ params }: { params: { courseId: string
           return {
             id: item.id,
             title: item.assignment_name || "Untitled Assignment",
-            description: "Assignment created via Verbalize", // 数据库暂时没这个字段，用默认的
+            description: "Assignment created via Verbalize",
             status: "Active", 
             dueDate: dateStr, 
-            called: 0, // 进度等以后连表查询再做真实计算
+            called: 0, 
             total: 0,
           };
         });
 
-        // 暂时把所有查出来的作业放在 "All Assignments" 这个大分类下
-        setSections([
-          {
-            title: "All Assignments",
-            items: mappedItems,
-          },
-        ]);
+        setSections([{ title: "All Assignments", items: mappedItems }]);
       }
       setLoading(false);
     }
 
     fetchAssignments();
-  }, [params.courseId]);
+  }, [courseId]); 
 
   return (
     <>
       <div className="h-full">
-        {/* 头部标题区 */}
+        
         <div className="flex justify-between items-center px-2 py-4 border-b border-gray-100 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Assignments</h1>
-            <p className="text-sm text-slate-500">Course ID: {params.courseId}</p>
+            
+            <p className="text-sm text-slate-500">Course ID: {courseId}</p>
           </div>
           <button
             onClick={() => setOpenModal(true)}
@@ -106,7 +131,7 @@ export default function AssignmentsPage({ params }: { params: { courseId: string
           </button>
         </div>
 
-        {/* 列表区 */}
+        
         <div className="space-y-8 px-2 py-2">
           {loading ? (
             <div className="flex justify-center items-center py-20">
@@ -187,7 +212,12 @@ export default function AssignmentsPage({ params }: { params: { courseId: string
                       </button>
 
                       {/* email button */}
-                      <button type="button" className="shrink-0 rounded-xl bg-[#5b92b9] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_8px_18px_rgba(91,146,185,0.25)] transition hover:brightness-105">
+                      <button 
+                        type="button" 
+                       
+                        onClick={() => handleSendEmail(item.id)}
+                        className="shrink-0 rounded-xl bg-[#5b92b9] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_8px_18px_rgba(91,146,185,0.25)] transition hover:brightness-105"
+                      >
                         EMAIL
                       </button>
                     </div>
@@ -202,10 +232,9 @@ export default function AssignmentsPage({ params }: { params: { courseId: string
       <CreateModal  
         open={openModal}
         mode="assignment"
-        courseId={params.courseId}
+        courseId={courseId}
         onClose={() => {
           setOpenModal(false);
-          // 粗暴但有效的刷新，让刚建好的作业立刻出现
           window.location.reload(); 
         }}
       />
