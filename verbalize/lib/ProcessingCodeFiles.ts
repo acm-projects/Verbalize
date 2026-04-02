@@ -82,7 +82,9 @@ export async function processMasterZip(assignmentId: number, zipPath: string) {
     //Final Batch Insert
     if (newSubmissions.length > 0) {
         //Use upsert to handle cases where a row might already exist
-        
+
+        console.log("FINAL submissions payload:", newSubmissions);
+
         const { error } = await supabase
             .from("Submissions")
             .upsert(newSubmissions, { onConflict: 'assignment_id, student_id' });

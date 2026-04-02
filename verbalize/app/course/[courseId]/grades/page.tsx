@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, use } from "react";
 import CreateModal from "@/app/components/shared/CreateModal";
-import { createClient } from "@/lib/supabase/client"; // 引入 Supabase
+import { createClient } from "@/lib/supabase/client";
 
 type AssignmentDetail = {
   name: string;
@@ -32,29 +33,35 @@ function getDetailBorder(status: "Completed" | "Pending" | "Missed") {
   return "border-red-300";
 }
 
-export default function GradesPage({ params }: { params: { courseId: string } }) {
+
+export default function GradesPage({ params }: { params: Promise<{ courseId: string }> }) {
   const [openModal, setOpenModal] = useState(false);
   const [openRows, setOpenRows] = useState<number[]>([]);
   
+  
+  const resolvedParams = use(params);
+  const courseId = Number(resolvedParams.courseId);
+
   const [students, setStudents] = useState<StudentGrade[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
     async function fetchStudents() {
+      
+      if (!courseId) return;
+
       const { data, error } = await supabase
-        .from("Students") // <--- 填入你真实的表名！
+        .from("Students") 
         .select("*")
-        .eq("course_id", params.courseId); // 核心：只查当前课的学生！
+        .eq("course_id", courseId); 
 
       if (error) {
         console.error("Error fetching students:", error);
       } else if (data && data.length > 0) {
-        // 如果查到了真实数据，你需要在这里把数据库字段 map 成 UI 需要的格式
-        // setStudents(formattedData);
         console.log("Real student data:", data);
+     
       } else {
-        // 为了暂时不让页面空白，如果没有查到真实数据，先塞点假数据（或者留空）
         console.log("No real data yet, using mock fallback.");
         setStudents(getMockFallbackData());
       }
@@ -62,7 +69,7 @@ export default function GradesPage({ params }: { params: { courseId: string } })
     }
 
     fetchStudents();
-  }, [params.courseId]);
+  }, [courseId]); 
 
   const toggleRow = (index: number) => {
     setOpenRows((prev) =>
@@ -77,7 +84,8 @@ export default function GradesPage({ params }: { params: { courseId: string } })
         <div className="flex justify-between items-center px-2 py-4 border-b border-gray-100 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Grades</h1>
-            <p className="text-sm text-slate-500">Course ID: {params.courseId}</p>
+            
+            <p className="text-sm text-slate-500">Course ID: {courseId}</p>
           </div>
           <button
             onClick={() => setOpenModal(true)}
@@ -88,8 +96,27 @@ export default function GradesPage({ params }: { params: { courseId: string } })
         </div>
 
         <div className="px-2 py-2">
-          {/* Search Bar (不变) */}
-          {/* ... 为了篇幅省略，保留你原来的 search bar 代码 ... */}
+          {/* Search Bar */}
+          <div className="mb-4 flex items-center justify-between">
+            <div className="relative w-72">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <svg className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                className="block w-full rounded-lg border border-gray-200 bg-gray-50 p-2 pl-10 text-sm text-gray-900 focus:border-[#5b92b9] focus:ring-[#5b92b9] outline-none transition-all"
+                placeholder="Search students..."
+              />
+            </div>
+            <div className="flex gap-2">
+               <button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                  Filter
+               </button>
+            </div>
+          </div>
 
           <div className="overflow-hidden rounded-xl border border-[#edf2f7]">
             {/* Table Header */}
@@ -104,7 +131,7 @@ export default function GradesPage({ params }: { params: { courseId: string } })
               <div />
             </div>
 
-            {/* Table Body (增加 Loading 状态) */}
+            {/* Table Body */}
             <div className="bg-white px-3 py-4">
               {loading ? (
                 <div className="flex justify-center items-center py-10">
@@ -120,7 +147,6 @@ export default function GradesPage({ params }: { params: { courseId: string } })
                     const isOpen = openRows.includes(index);
                     return (
                       <div key={`${student.netId}-${index}`}>
-                        {/* 这里保留你原本所有的 map 渲染逻辑，一个字都不用改！ */}
                         <div className="grid grid-cols-[46px_1.1fr_1.1fr_1fr_1.2fr_1.1fr_0.9fr_54px] items-center gap-4 rounded-xl text-[13px] border border-sky-200 px-4 py-2">
                            <button onClick={() => toggleRow(index)} className="flex h-7 w-7 items-center justify-center rounded-[10px] bg-[#5f93b8] text-white shadow-sm transition hover:brightness-105">
                              <span className="text-white text-lg font-bold">{isOpen ? "-" : "+"}</span>
@@ -133,10 +159,9 @@ export default function GradesPage({ params }: { params: { courseId: string } })
                              <span className={`rounded-full px-3 py-1 text-[12px] font-bold uppercase tracking-[0.08em] ${getStatusBadge(student.callStatus)}`}>{student.callStatus}</span>
                            </div>
                            <div className="text-[20px] font-bold text-[#111827]">{student.avgGrade}</div>
-                           <div /> {/* Actions */}
+                           <div />
                         </div>
 
-                        {/* Expandable Details */}
                         {isOpen && (
                           <div className="ml-[58px] mt-3 space-y-3">
                             {student.details.map((detail, detailIndex) => (
@@ -161,14 +186,14 @@ export default function GradesPage({ params }: { params: { courseId: string } })
       <CreateModal
         open={openModal}
         mode="assignment"
-        courseId={params.courseId}
+        
+        courseId={courseId}
         onClose={() => setOpenModal(false)}
       />
     </>
   );
 }
 
-// 仅仅是为了不报错加的 fallback 函数，等你数据库连上就可以删了
 function getMockFallbackData(): StudentGrade[] {
   return [
     { lastName: "nguyen", firstName: "nguyen", netId: "abc123", mainAssignment: "assignment1", callStatus: "Completed", avgGrade: 100, details: [] },

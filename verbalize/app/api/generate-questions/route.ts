@@ -16,7 +16,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "system",
-          content: "You are a computer science professor generating oral defense questions. Generate exactly 20 questions based ONLY on the assignment instructions provided. Questions should be appropriate for an introductory to intermediate programming student.Focus on problem-solving, logic, edge cases, and basic efficiency. Avoid overly advanced or theoretical questions. Avoid trivial or syntax-based questions. Questions must require explanation (not yes/no) and include a mix of straightforward and moderately challenging questions. Return ONLY valid JSON in the required schema."
+          content: "You are an examiner. Generate 20 technical questions based on instructions of the coding assignment. Ask coding related questions only, like. Output ONLY JSON."
         },
         { role: "user", content: instructionText }
       ],

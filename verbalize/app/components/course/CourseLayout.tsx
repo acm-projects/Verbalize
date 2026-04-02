@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ReactNode } from "react";
-// 引入 useParams 来获取动态路由参数
+
 import { useParams } from "next/navigation"; 
 import CoursePlate from "./CoursePlate";
 
@@ -16,11 +16,11 @@ type CourseLayoutProps = {
 export default function CourseLayout({
   current,
   children,
-  courseCode, // 这里去掉了默认的 "CS1200"
+  courseCode, 
   onAddClick,
 }: CourseLayoutProps) {
   
-  // 🔴 核心改动：获取当前真实的 courseId
+  
   const params = useParams();
   const courseId = params?.courseId as string || "unknown";
 
@@ -29,9 +29,7 @@ export default function CourseLayout({
   const activeItem = "text-[#407EA7]";
   const inactiveItem = "text-[#407EA7]/55 hover:text-[#407EA7]/85";
 
-  // 注意：这个 getNeighbors 函数主要是给 SidePlate 用的，
-  // 既然我们现在移除了霸道的 CoursePlate，这部分代码其实也可以以后清理掉，
-  // 但为了安全起见，我先帮你把这里的路径也修正了。
+
   const getNeighbors = () => {
     if (current === "assignments") {
       return {
@@ -81,11 +79,11 @@ export default function CourseLayout({
                 href="/appledashboard"
                 className={`${itemBase} ${activeItem}`}
               >
-                {/* 🔴 如果没传 courseCode，就显示 URL 里的 courseId */}
+               
                 Class: {courseCode || courseId}
               </Link>
 
-              {/* 🔴 核心改动：修改了 href 路径，拼接了真实的 courseId */}
+             
               <Link
                 href={`/course/${courseId}/assignments`}
                 className={`${itemBase} ${current === "assignments" ? activeItem : inactiveItem
@@ -119,8 +117,7 @@ export default function CourseLayout({
                 )}
               </Link>
 
-              {/* 注意：你在子页面里已经重写了 Add Assignment 按钮，所以这里的其实多余了。
-                  如果不需要，你可以把它删掉。 */}
+             
               <button
                 type="button"
                 onClick={onAddClick}
@@ -148,11 +145,6 @@ export default function CourseLayout({
   );
 }
 
-// ============================================================================
-// 下面这些组件 (SidePlate, PreviewShape) 是 Huy 之前写给 CoursePlate 用的动画。
-// 既然我们现在不用 CoursePlate 了，这些代码其实处于“休眠”状态。
-// 我帮你原封不动地保留在这里，万一他以后还要用到，就不会报错了。
-// ============================================================================
 
 function SidePlate({
   label,
