@@ -21,10 +21,11 @@ export default function CourseLayout({
   const courseId = params?.courseId as string || "unknown";
 
   // 3. Logic to determine 'current' status automatically based on the URL
-  let current: "assignments" | "students" | "grades" | "none" = "none";
+  let current: "assignments" | "students" | "grades" | "graphicdashboard" | "none" = "none";
   if (pathname.includes("/assignments")) current = "assignments";
   else if (pathname.includes("/students")) current = "students";
   else if (pathname.includes("/grades")) current = "grades";
+  else if (pathname.includes("/graphicdashboard")) current = "graphicdashboard";
 
   // Base styles for navigation items
   const itemBase = "relative pt-2 pb-2 text-[15px] font-semibold transition-all duration-200";
@@ -88,14 +89,14 @@ export default function CourseLayout({
                 {current === "grades" && activeLine}
               </Link>
 
-              {/* Add Assignment Button */}
-              <button
-                type="button"
-                onClick={onAddClick}
-                className={`${itemBase} text-[#407EA7]/70 hover:text-[#407EA7] hover:bg-slate-50 px-3 rounded-lg transition-colors`}
+              <Link
+                href={`/course/${courseId}/graphicdashboard`}
+                className={`${itemBase} ${current === "graphicdashboard" ? activeItem : inactiveItem}`}
               >
-                + Add Assignment
-              </button>
+                Graphic Dashboard
+                {current === "graphicdashboard" && activeLine}
+              </Link>
+
             </nav>
           </div>
 

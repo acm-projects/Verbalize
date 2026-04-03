@@ -60,7 +60,6 @@ export default function GradesPage({ params }: { params: Promise<{ courseId: str
         console.error("Error fetching students:", error);
       } else if (data && data.length > 0) {
         console.log("Real student data:", data);
-     
       } else {
         console.log("No real data yet, using mock fallback.");
         setStudents(getMockFallbackData());
