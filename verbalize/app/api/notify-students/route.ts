@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       
       const msg = {
         to: studentData.email, 
-        from: 'noreply@verbalize.com', 
+        from: process.env.SENDGRID_SENDER_EMAIL || 'test@example.com', 
         subject: `Your Oral Assessment PIN Code`,
         html: `
           <div style="font-family: sans-serif; padding: 20px;">

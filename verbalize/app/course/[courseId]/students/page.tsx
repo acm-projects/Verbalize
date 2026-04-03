@@ -21,6 +21,29 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
+  const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const [selectedTranscript, setSelectedTranscript] = useState<any[]>([]);
+  const [modalType, setModalType] = useState<"code" | "transcript" | null>(null);
+
+  const handleViewCode = async (studentId?: string) => {
+  if (!studentId) return;
+
+  const { data, error } = await supabase
+    .from("Submissions")
+    .select("code_text")
+    .eq("student_id", studentId)
+    .order("submitted_at", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.log(error);
+    return;
+  }
+
+  setSelectedCode(data?.[0]?.code_text || "No code found");
+  setModalType("code");
+};
+
   const resolvedParams = use(params);
   const courseId = resolvedParams.courseId;
 
@@ -131,13 +154,19 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
                     <div className="text-[#6e6e73]">{student.netId}</div>
 
                     <div>
-                      <span className="font-semibold text-[#4f87b0] cursor-pointer hover:text-blue-700 underline underline-offset-2 transition">
-                        View Code
+                      <span
+                          onClick={() => handleViewCode(student.id)}
+                          className="font-semibold text-[#4f87b0] cursor-pointer hover:text-blue-700 underline"
+                        >
+                          View Code
                       </span>
                     </div>
 
                     <div>
-                      <span className="font-semibold text-[#4f87b0] cursor-pointer hover:text-blue-700 underline underline-offset-2 transition">
+                      <span
+                        //onClick={() => handleViewTranscript(student.id)}
+                        className="font-semibold text-[#4f87b0] cursor-pointer hover:text-blue-700 underline"
+                      >
                         Transcript
                       </span>
                     </div>
@@ -166,6 +195,47 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
         courseId={courseId}
         onClose={() => setOpenModal(false)}
       />
+
+      {modalType && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-white rounded-xl p-6 w-[700px] max-h-[80vh] overflow-y-auto shadow-xl">
+      
+      {/* CLOSE */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-bold">
+          {modalType === "code" ? "Student Code" : "AI Transcript"}
+        </h2>
+        <button onClick={() => setModalType(null)}>✕</button>
+      </div>
+
+      {/* CODE VIEW */}
+      {modalType === "code" && (
+        <pre className="bg-gray-100 p-4 rounded text-sm overflow-x-auto">
+          {selectedCode}
+        </pre>
+      )}
+
+      {/* TRANSCRIPT VIEW */}
+      {modalType === "transcript" && (
+        <div className="space-y-4">
+          {selectedTranscript.map((entry, i) => (
+            <div key={i} className="border p-3 rounded">
+              <p className="font-bold text-sm mb-1">
+                Question {i + 1}
+              </p>
+              <p className="text-sm text-gray-700">
+                {entry.student_response}
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Summary: {entry.summary}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+)}
     </>
   );
 }
