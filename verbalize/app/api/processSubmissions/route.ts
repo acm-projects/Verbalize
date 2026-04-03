@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
     const { data: student, error } = await supabase
       .from("Students")
-      .select("ID")
+      .select("id")
       .eq("netID", netID)
       .maybeSingle()
 
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     const { error: upsertError } = await supabase
   .from("Submissions")
   .upsert({
-    student_id: student.ID,
+    student_id: student.id,
     assignment_id: assignmentId,
     student_submission: entry.entryName,
     submitted_at: new Date()

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import BackButton from "../assets/back-button.png";
 import { login } from "@/app/login/actions";
+import { signInWithGoogle } from "@/app/login/actions";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useActionState } from 'react';
@@ -67,11 +68,12 @@ export default function Login() {
                                     <button disabled={isPending} type="submit" className="w-full active:scale-95 bg-[#4A86A8] hover:bg-[#3d6e8a] text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-[#4A86A8]/30">
                                         {isPending ? 'Loading...' : 'Sign in'}
                                     </button>
-                                    <button type="submit" className="w-full active:scale-95 bg-white hover:bg-[#3d6e8a] text-red-500 font-bold py-4 rounded-xl transition-colors shadow-lg shadow-[#4A86A8]/30">
-                                        Sign in with Google
-                                    </button>
 
                                 </form>
+
+                                <button type="button" onClick={signInWithGoogle} className="w-full active:scale-95 bg-white hover:bg-[#3d6e8a] text-red-500 font-bold py-4 rounded-xl transition-colors shadow-lg shadow-[#4A86A8]/30">
+                                        Sign in with Google
+                                </button>
 
                                 <div className="flex justify-center gap-2 text-sm mt-4">
                                     <button className="text-gray-400 hover:underline">Forgot password?</button>

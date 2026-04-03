@@ -6,9 +6,9 @@ import CreateModal from "../components/shared/CreateModal";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 
-// 定义从数据库取回来的课程类型
+//
 type Course = {
-  id: string;
+  id: number;
   course_name: string;
   section_num: string;
   created_at: string;
@@ -17,18 +17,27 @@ type Course = {
 export default function DashboardPage() {
   const [openClassModal, setOpenClassModal] = useState(false);
   
-  // 替换成状态，用来存储从数据库获取的真实课程
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
-  // 页面加载时获取真实课程数据
   useEffect(() => {
     async function fetchCourses() {
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.error("No logged-in user");
+        return;
+      }
+
       const { data, error } = await supabase
         .from("Course_Details")
         .select("*")
-        .order("created_at", { ascending: false }); // 最新创建的排在前面
+        .eq("professor_id", user.id) 
+        .order("created_at", { ascending: false }); 
 
       if (error) {
         console.error("Error fetching courses:", error);
@@ -41,11 +50,8 @@ export default function DashboardPage() {
     fetchCourses();
   }, []);
 
-  // 因为数据库里可能没有这些进度数据，我们暂时用模拟数据代替进度条显示
-  // 等你以后建立了作业表，就可以连表查询真实进度了
-// 把参数类型改成 any 或者 number | string，并且去掉 replace
+ 
   const getMockProgress = (id: any) => {
-    // 直接把它转成数字，如果失败就默认给个 0
     const num = Number(id) || 0; 
     
     return {
@@ -58,7 +64,7 @@ export default function DashboardPage() {
   return (
     <>
       <main className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-20">
-        {/* Header (未作改动，保留你队友的UI) */}
+        {/* Header */}
         <header className="sticky top-0 z-50 border-b border-[#407EA7]/10 bg-white/80 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-8">
             <div className="flex items-center gap-3">
@@ -115,7 +121,6 @@ export default function DashboardPage() {
                 {courses.map((course) => {
                   const mockData = getMockProgress(course.id);
                   return (
-                    // 🔴 核心改动：把写死的 href 换成动态路由！
                     <Link
                       key={course.id}
                       href={`/course/${course.id}/assignments`}
@@ -126,19 +131,19 @@ export default function DashboardPage() {
                         <div className="absolute inset-0 bg-gradient-to-br from-[#407EA7] to-[#2D5A78] opacity-90" />
                         <div className="relative z-10">
                           <div className="flex justify-between items-start">
-                            {/* 使用数据库里的 section_num */}
+                            {/* section_num */}
                             <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Section {course.section_num}</span>
                             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border backdrop-blur-md bg-emerald-500/50 text-white border-emerald-500/30">
                               Active
                             </span>
                           </div>
-                          {/* 使用数据库里的 course_name */}
+                          {/* course_name */}
                           <h2 className="mt-1 text-lg font-bold leading-tight group-hover:underline truncate">{course.course_name}</h2>
                           <p className="text-[11px] opacity-70">Spring 2026</p>
                         </div>
                       </div>
 
-                      {/* Content: 暂时使用 Mock 数据保持 UI 美观 */}
+                      {/* Content: Mock UI */}
                       <div className="p-4 flex-1 flex flex-col justify-between">
                         <div className="flex justify-between items-center text-xs text-slate-500 mb-4">
                           <span>{mockData.students} Students</span>
@@ -177,7 +182,7 @@ export default function DashboardPage() {
           </motion.div>
         </section>
 
-        {/* Nút ADD CLASS */}
+        {/* ADD CLASS */}
         <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -192,13 +197,11 @@ export default function DashboardPage() {
         </motion.div>
       </main>
 
-      {/* 修改这里：创建完课程后，主动刷新一遍列表！ */}
       <CreateModal
         open={openClassModal}
         mode="class"
         onClose={() => {
           setOpenClassModal(false);
-          // 重新跑一次获取数据的逻辑，让新卡片立刻出现！
           window.location.reload(); 
         }}
       />

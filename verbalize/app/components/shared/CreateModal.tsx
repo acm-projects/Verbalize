@@ -96,7 +96,7 @@ export default function CreateModal({
           .from("Assignments")
           .insert({
             assignment_name: nameValue,
-            course_id: courseId, 
+            course_id: courseId,
           })
           .select()
           .single();
