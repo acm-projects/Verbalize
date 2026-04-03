@@ -99,10 +99,26 @@ export default function CreateAssignment() {
           instructionText: aiText 
         }),
       });
+      const { data: subs } = await supabase
+        .from("Submissions")
+        .select("student_id")
+        .eq("assignment_id", createdAssignmentId);
 
-      if (!aiResponse.ok) throw new Error("AI Question generation failed.");
+      if (subs) {
+        // Loop through each student and generate their 2 custom questions
+        for (const sub of subs) {
+          await fetch("/api/generate-student-questions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              assignmentId: createdAssignmentId, 
+              studentId: sub.student_id 
+            })
+          });
+        }
+      }
 
-      alert("Full Success! PDF stored, ZIP processed, and 20 Questions generated.");
+      alert("Full Success! PDF stored, ZIP uploaded, and 20 AI questions generated.");
     } catch (e: any) {
       alert(e.message)
     } finally {

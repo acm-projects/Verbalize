@@ -1,75 +1,22 @@
-import AdmZip from "adm-zip"
-import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { processMasterZip } from "@/lib/ProcessingCodeFiles";
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
+  const { zipPath, assignmentId } = await req.json();
 
-  const supabase = await createClient()
-
-  const { zipPath, assignmentId } = await req.json()
-
-  const { data, error } = await supabase
-  .storage
-  .from("AssignmentsBucket")
-  .download(zipPath)
-
-  if (!data) {
-     throw new Error(error?.message || "Zip file not found")
-  }
-
-  const buffer = Buffer.from(await data.arrayBuffer())
-
-  const zip = new AdmZip(buffer)
-
-  const entries = zip.getEntries()
-
-  for (const entry of entries) {
-    if (entry.isDirectory) continue
-
-  if (!entry.entryName.includes('/')) continue
-
-  console.log("Processing file:", entry.entryName)
-
-  // Now ONLY handle student zip files
-  if (!entry.entryName.endsWith(".zip")) continue
-
-  const studentZipBuffer = entry.getData()
-
-  // Extract netID from filename
-  const fileName = entry.entryName.split('/').pop()!
-  const netID = fileName.replace(".zip", "")
-
-  console.log("NetID:", netID)
-
-    const { data: student, error } = await supabase
-      .from("Students")
-      .select("ID")
-      .eq("netID", netID)
-      .maybeSingle()
-
-    console.log("Student query result:", student)
-    console.log("Student query error:", error)
-    if (!student) { console.log("hi"); continue; }
-
-    console.log(assignmentId)
-
-    
-    const { error: upsertError } = await supabase
-  .from("Submissions")
-  .upsert({
-    student_id: student.ID,
-    assignment_id: assignmentId,
-    student_submission: entry.entryName,
-    submitted_at: new Date()
-  })
-
-if (upsertError) {
-  console.error("Submission upsert failed:", upsertError)
+  try {
+    // In your route handler
+try {
+  await processMasterZip(assignmentId, zipPath);
+  return NextResponse.json({ message: "Processed successfully" });
+} catch (error: any) {
+  console.error("DETAILED_ERROR:", error); // Check your terminal logs for this!
+  return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
 }
-  
 
+    return NextResponse.json({ message: "Processed successfully" });
+  } catch (error: any) {
+    console.log(error)
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-
-  return NextResponse.json({ success: true })
 }
