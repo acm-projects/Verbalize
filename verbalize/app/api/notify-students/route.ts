@@ -10,6 +10,8 @@ export async function POST(req: Request) {
     const supabase = await createClient();
 
     
+
+    
     const { data: submissions, error: fetchError } = await supabase
       .from("Submissions")
       .select("id, student_id")
