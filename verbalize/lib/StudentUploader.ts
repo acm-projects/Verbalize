@@ -50,7 +50,7 @@ export class StudentUploader {
               //Check if student exists
               let { data: student } = await this.supabase
                 .from("Students")
-                .select("ID")
+                .select("id")
                 .eq("netID", netID)
                 .maybeSingle();
 
@@ -65,7 +65,7 @@ export class StudentUploader {
                       netID,
                       email,
                     })
-                    .select("ID")
+                    .select("id")
                     .single();
 
                 if (insertError) throw insertError;
@@ -78,7 +78,7 @@ export class StudentUploader {
                 .from("Course_Students")
                 .insert({
                   course_id: this.courseId,   // must be passed in
-                  student_id: student.ID,
+                  student_id: student.id,
                 });
 
               if (enrollError && enrollError.code !== "23505") {
