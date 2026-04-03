@@ -5,29 +5,29 @@ export class StudentUploader {
   supabase: SupabaseClient;
   file: File | null;
 
-  constructor(supabase: SupabaseClient, file: File | null = null) {
+  courseId?: number | string; 
+
+
+  constructor(supabase: SupabaseClient, file: File | null = null, courseId?: number | string) {
     this.supabase = supabase;
     this.file = file;
+    this.courseId = courseId; 
   }
 
   setFile(file: File) {
     this.file = file;
   }
 
-  // Upload the CSV to Supabase Storage
   async uploadToStorage(): Promise<string> {
     if (!this.file) throw new Error("No file selected");
-
     const uniqueName = `${Date.now()}-${this.file.name}`;
     const { data, error } = await this.supabase.storage
       .from("StudentBucket")
       .upload(`uploads/${uniqueName}`, this.file);
-
     if (error) throw error;
     return data.path;
   }
 
-  // Parse the CSV and insert students into database
   async parseAndInsert(): Promise<void> {
     if (!this.file) throw new Error("No file selected");
 
@@ -37,8 +37,8 @@ export class StudentUploader {
         skipEmptyLines: true,
         complete: async (results) => {
           try {
-            // Skip header row
-            const rows = results.data.slice(1);
+            const rows = results.data.slice(1); 
+            
 
             const studentsToInsert = rows.map((row: any) => ({
               first_name: row[0],
@@ -63,7 +63,6 @@ export class StudentUploader {
     });
   }
 
-  // Full process: upload + insert
   async process(): Promise<void> {
     await this.uploadToStorage();
     await this.parseAndInsert();

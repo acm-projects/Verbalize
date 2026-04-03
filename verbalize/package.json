@@ -16,6 +16,7 @@
     "adm-zip": "^0.5.16",
     "framer-motion": "^12.35.0",
     "groq-sdk": "^1.1.2",
+    "jszip": "^3.10.1",
     "next": "16.1.6",
     "papaparse": "^5.5.3",
     "pdfjs-dist": "^5.5.207",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/adm-zip": "^0.5.8",
+    "@types/jszip": "^3.4.0",
     "@types/node": "^20",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
