@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
     const { data: student, error } = await supabase
       .from("Students")
-      .select("ID")
+      .select("id")
       .eq("netID", netID)
       .maybeSingle()
 
