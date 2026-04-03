@@ -141,11 +141,35 @@ export default function CreateModal({
 
         setMessage("5/5 Generating AI questions...");
         
+
+        // Generate AI Questions
         const aiResponse = await fetch("/api/generate-questions", {
           method: "POST", 
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ assignmentId, instructionText: aiText }),
+          body: JSON.stringify({ 
+            assignmentId: assignmentId, 
+            instructionText: aiText 
+          }),
         });
+        const { data: subs } = await supabase
+          .from("Submissions")
+          .select("student_id")
+          .eq("assignment_id", assignmentId);
+
+      if (subs) {
+        // Loop through each student and generate their 2 custom questions
+        for (const sub of subs) {
+          await fetch("/api/generate-student-questions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              assignmentId: assignmentId, 
+              studentId: sub.student_id 
+            })
+          });
+        }
+      }
+        
         if (!aiResponse.ok) throw new Error("AI Question generation failed.");
         
         setMessage("Assignment created successfully!");
