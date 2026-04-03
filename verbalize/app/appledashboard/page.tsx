@@ -6,64 +6,54 @@ import CreateModal from "../components/shared/CreateModal";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 
-// Define course type
+//
 type Course = {
-  id: string;
+  id: number;
   course_name: string;
   section_num: string;
   created_at: string;
 };
 
-
-const cardThemes = [
-  { from: "from-[#407EA7]", to: "to-[#2D5A78]", shadow: "shadow-[#407EA7]/10", progress: "text-[#407EA7]", bgProgress: "bg-[#407EA7]" }, 
-  { from: "from-[#5D5CDE]", to: "to-[#4847B0]", shadow: "shadow-[#5D5CDE]/10", progress: "text-[#5D5CDE]", bgProgress: "bg-[#5D5CDE]" }, 
-  { from: "from-[#0F766E]", to: "to-[#0D9488]", shadow: "shadow-[#0F766E]/10", progress: "text-[#0F766E]", bgProgress: "bg-[#0F766E]" }, 
-  { from: "from-[#6366F1]", to: "to-[#4F46E5]", shadow: "shadow-[#6366F1]/10", progress: "text-[#6366F1]", bgProgress: "bg-[#6366F1]" }, 
-  { from: "from-[#8B5CF6]", to: "to-[#7C3AED]", shadow: "shadow-[#8B5CF6]/10", progress: "text-[#8B5CF6]", bgProgress: "bg-[#8B5CF6]" }, 
-  { from: "from-[#F43F5E]", to: "to-[#E11D48]", shadow: "shadow-[#F43F5E]/10", progress: "text-[#F43F5E]", bgProgress: "bg-[#F43F5E]" }, 
-  { from: "from-[#D97706]", to: "to-[#B45309]", shadow: "shadow-[#D97706]/10", progress: "text-[#D97706]", bgProgress: "bg-[#D97706]" }, 
-  { from: "from-[#2563EB]", to: "to-[#1D4ED8]", shadow: "shadow-[#2563EB]/10", progress: "text-[#2563EB]", bgProgress: "bg-[#2563EB]" }, 
-];
-
-
-const getThemeIndexByName = (name: string) => {
-  let hash = 0;
-  
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return Math.abs(hash) % cardThemes.length;
-};
-
 export default function DashboardPage() {
   const [openClassModal, setOpenClassModal] = useState(false);
+  
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
-  
-  const fetchCourses = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("Course_Details")
-      .select("*")
-      .order("course_name", { ascending: true });
-
-    if (error) {
-      console.error("Error fetching courses:", error);
-    } else if (data) {
-      setCourses(data);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
+    async function fetchCourses() {
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.error("No logged-in user");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("Course_Details")
+        .select("*")
+        .eq("professor_id", user.id) 
+        .order("created_at", { ascending: false }); 
+
+      if (error) {
+        console.error("Error fetching courses:", error);
+      } else if (data) {
+        setCourses(data);
+      }
+      setLoading(false);
+    }
+
     fetchCourses();
   }, []);
 
+ 
   const getMockProgress = (id: any) => {
-    const num = Number(id) || 0;
+    const num = Number(id) || 0; 
+    
     return {
       students: (num % 50) + 20,
       submissionRate: (num % 40) + 50,
@@ -74,6 +64,7 @@ export default function DashboardPage() {
   return (
     <>
       <main className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-20">
+        {/* Header */}
         <header className="sticky top-0 z-50 border-b border-[#407EA7]/10 bg-white/80 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-8">
             <div className="flex items-center gap-3">
@@ -101,6 +92,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
+          className="text-center lg:text-left"
         >
           <section className="px-8 pt-12 pb-8 max-w-[1400px] mx-auto">
             <h1 className="text-3xl font-black text-slate-800 italic">Welcome back, Professor.</h1>
@@ -108,11 +100,13 @@ export default function DashboardPage() {
           </section>
         </motion.div>
 
+        {/* Grid (Canvas Style) */}
         <section className="px-8 max-w-[1400px] mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
+            className="text-center lg:text-left"
           >
             {loading ? (
               <div className="flex justify-center items-center h-40">
@@ -126,31 +120,30 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {courses.map((course) => {
                   const mockData = getMockProgress(course.id);
-                  
-                  
-                  const themeIndex = getThemeIndexByName(course.course_name);
-                  const theme = cardThemes[themeIndex];
-
                   return (
                     <Link
                       key={course.id}
                       href={`/course/${course.id}/assignments`}
-                      className={`group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl ${theme.shadow}`}
+                      className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-[#407EA7]/10"
                     >
-                      <div className={`h-28 relative p-5 text-white`}>
-                        <div className={`absolute inset-0 bg-gradient-to-br ${theme.from} ${theme.to} opacity-90`} />
+                      {/* Top */}
+                      <div className="h-28 relative bg-[#407EA7] p-5 text-white">
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#407EA7] to-[#2D5A78] opacity-90" />
                         <div className="relative z-10">
                           <div className="flex justify-between items-start">
+                            {/* section_num */}
                             <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Section {course.section_num}</span>
                             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border backdrop-blur-md bg-emerald-500/50 text-white border-emerald-500/30">
                               Active
                             </span>
                           </div>
+                          {/* course_name */}
                           <h2 className="mt-1 text-lg font-bold leading-tight group-hover:underline truncate">{course.course_name}</h2>
                           <p className="text-[11px] opacity-70">Spring 2026</p>
                         </div>
                       </div>
 
+                      {/* Content: Mock UI */}
                       <div className="p-4 flex-1 flex flex-col justify-between">
                         <div className="flex justify-between items-center text-xs text-slate-500 mb-4">
                           <span>{mockData.students} Students</span>
@@ -159,14 +152,15 @@ export default function DashboardPage() {
                           </div>
                         </div>
 
+                        {/* Progress bars */}
                         <div className="space-y-3">
                           <div>
                             <div className="flex justify-between text-[10px] mb-1 font-bold text-slate-400 uppercase">
                               <span>Submissions</span>
-                              <span className={theme.progress}>{mockData.submissionRate}%</span>
+                              <span className="text-[#407EA7]">{mockData.submissionRate}%</span>
                             </div>
                             <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                              <div className={`h-full ${theme.bgProgress} rounded-full`} style={{ width: `${mockData.submissionRate}%` }} />
+                              <div className="h-full bg-[#407EA7] rounded-full" style={{ width: `${mockData.submissionRate}%` }} />
                             </div>
                           </div>
                           <div>
@@ -188,6 +182,7 @@ export default function DashboardPage() {
           </motion.div>
         </section>
 
+        {/* ADD CLASS */}
         <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -207,7 +202,7 @@ export default function DashboardPage() {
         mode="class"
         onClose={() => {
           setOpenClassModal(false);
-          fetchCourses(); 
+          window.location.reload(); 
         }}
       />
     </>

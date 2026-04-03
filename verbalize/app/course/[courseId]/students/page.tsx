@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useState, useEffect, use } from "react";
 import CreateModal from "@/app/components/shared/CreateModal";
 import { createClient } from "@/lib/supabase/client";
@@ -15,17 +14,15 @@ type StudentInfo = {
 };
 
 
-export default function StudentsPage({ params }: { params: Promise<{ courseId: string }> }) {
+export default function StudentsPage({ params }: { params: Promise<{ courseId: number }> }) {
   const [openModal, setOpenModal] = useState(false);
-  
-
-  const resolvedParams = use(params);
-  const courseId = Number(resolvedParams.courseId);
-
 
   const [students, setStudents] = useState<StudentInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
+
+  const resolvedParams = use(params);
+  const courseId = resolvedParams.courseId;
 
   useEffect(() => {
     async function fetchStudents() {
@@ -34,9 +31,17 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: s
 
       
       const { data, error } = await supabase
-        .from("Students") 
-        .select("*")
-        .eq("course_id", courseId); 
+        .from("Course_Students") 
+        .select(`
+          *,
+          Students (
+            id,
+            last_name,
+            first_name,
+            netID
+          )
+        `)
+        .eq("course_id", courseId);
 
       if (error) {
         console.error("Error fetching students:", error);
@@ -44,13 +49,18 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: s
         setStudents(getMockStudents());
       } else if (data && data.length > 0) {
      
-        const mappedStudents = data.map((s: any) => ({
-          id: s.id,
-          lastName: s.last_name || s.lastName || "Unknown",
-          firstName: s.first_name || s.firstName || "Unknown",
-          netId: s.net_id || s.netId || "N/A",
-          grade: s.grade || "A" 
-        }));
+        const mappedStudents = data.map((record: any) => {
+        // Access the nested student object
+              const s = record.Students; 
+              
+              return {
+                id: s?.id || record.id,
+                lastName: s?.last_name || "Unknown",
+                firstName: s?.first_name || "Unknown",
+                netId: s?.netID || "N/A",
+                grade: record.grade || "A" // Grade usually lives on the join table
+              };
+        });
         setStudents(mappedStudents);
       } else {
        

@@ -76,7 +76,6 @@ export default function Login() {
                                         <span>Sign in with Google</span>
                                     </button>
                                 </form>
-
                                 <div className="flex justify-center gap-2 text-sm mt-4">
                                     <button className="text-gray-400 hover:underline">Forgot password?</button>
                                     <Link href="/signup">

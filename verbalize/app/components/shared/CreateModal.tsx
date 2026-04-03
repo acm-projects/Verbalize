@@ -101,7 +101,7 @@ export default function CreateModal({
           .from("Assignments")
           .insert({
             assignment_name: nameValue,
-            course_id: courseId, 
+            course_id: courseId,
           })
           .select()
           .single();
@@ -172,7 +172,7 @@ export default function CreateModal({
 
         setMessage("Uploading and parsing student CSV...");
        
-        const uploader = new StudentUploader(supabase, zipFile);
+        const uploader = new StudentUploader(supabase, zipFile, data.courseId);
         await uploader.process();
 
         setMessage("Class created successfully!");
@@ -191,7 +191,7 @@ export default function CreateModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center text-black">
       <div className="absolute inset-0 bg-white/18 backdrop-blur-md" onClick={handleClose} />
 
       <div className="relative z-10 w-[min(92vw,620px)] rounded-[36px] bg-white px-10 py-10 shadow-[0_30px_80px_rgba(15,23,42,0.18)]">

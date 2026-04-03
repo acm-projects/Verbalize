@@ -4,30 +4,31 @@ import { SupabaseClient } from "@supabase/supabase-js";
 export class StudentUploader {
   supabase: SupabaseClient;
   file: File | null;
+  courseId: string | number;
 
-  constructor(supabase: SupabaseClient, file: File | null = null) {
+  
+
+
+  constructor(supabase: SupabaseClient, file: File | null = null, courseId: number | string) {
     this.supabase = supabase;
     this.file = file;
+    this.courseId = courseId; 
   }
 
   setFile(file: File) {
     this.file = file;
   }
 
-  // Upload the CSV to Supabase Storage
   async uploadToStorage(): Promise<string> {
     if (!this.file) throw new Error("No file selected");
-
     const uniqueName = `${Date.now()}-${this.file.name}`;
     const { data, error } = await this.supabase.storage
       .from("StudentBucket")
       .upload(`uploads/${uniqueName}`, this.file);
-
     if (error) throw error;
     return data.path;
   }
 
-  // Parse the CSV and insert students into database
   async parseAndInsert(): Promise<void> {
     if (!this.file) throw new Error("No file selected");
 
@@ -37,33 +38,58 @@ export class StudentUploader {
         skipEmptyLines: true,
         complete: async (results) => {
           try {
-            // Skip header row
-            const rows = results.data.slice(1);
+            const rows = results.data.slice(1) as string[][];
 
-            const studentsToInsert = rows.map((row: any) => ({
-              first_name: row[0],
-              last_name: row[1],
-              netID: row[2],
-              email: row[3],
-              course_section: row[4],
-            }));
+            for (const row of rows) {
+              const first_name = row[0];
+              const last_name = row[1];
+              const netID = row[2].trim().toLowerCase();
+              const email = row[3];
 
-            const { error } = await this.supabase
-              .from("Students")
-              .insert(studentsToInsert);
+              let { data: student } = await this.supabase
+                .from("Students")
+                .select("id")
+                .eq("netID", netID)
+                .maybeSingle();
 
-            if (error) reject(error);
-            else resolve();
+              if (!student) {
+                const { data: newStudent, error: insertError } =
+                  await this.supabase
+                    .from("Students")
+                    .insert({
+                      first_name,
+                      last_name,
+                      netID,
+                      email,
+                    })
+                    .select("id")
+                    .single();
+
+                if (insertError) throw insertError;
+                student = newStudent;
+              }
+
+              const { error: enrollError } = await this.supabase
+                .from("Course_Students")
+                .insert({
+                  course_id: this.courseId,
+                  student_id: student.id,
+                });
+
+              if (enrollError && enrollError.code !== "23505") {
+                throw enrollError;
+              }
+            }
+
+            resolve();
           } catch (err) {
             reject(err);
           }
         },
-        error: (err) => reject(err),
       });
     });
   }
 
-  // Full process: upload + insert
   async process(): Promise<void> {
     await this.uploadToStorage();
     await this.parseAndInsert();

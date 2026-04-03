@@ -5,7 +5,6 @@ import { useState, useEffect, use } from "react";
 import CreateModal from "@/app/components/shared/CreateModal";
 import { createClient } from "@/lib/supabase/client";
 
-// 你的类型定义保持不变
 type AssignmentDetail = {
   name: string;
   status: "Completed" | "Pending" | "Missed";
