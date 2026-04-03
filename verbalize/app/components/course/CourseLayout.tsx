@@ -29,38 +29,6 @@ export default function CourseLayout({
   const activeItem = "text-[#407EA7] font-bold scale-105"; // Added bold and slight scale for emphasis
   const inactiveItem = "text-[#407EA7]/55 hover:text-[#407EA7]/85";
 
-
-  const getNeighbors = () => {
-    if (current === "assignments") {
-      return {
-        left: { label: "Grades", href: `/course/${courseId}/grades`, type: "grades" as const },
-        right: { label: "Students", href: `/course/${courseId}/students`, type: "students" as const },
-      };
-    }
-
-    if (current === "students") {
-      return {
-        left: {
-          label: "Assignments",
-          href: `/course/${courseId}/assignments`,
-          type: "assignments" as const,
-        },
-        right: { label: "Grades", href: `/course/${courseId}/grades`, type: "grades" as const },
-      };
-    }
-
-    return {
-      left: { label: "Students", href: `/course/${courseId}/students`, type: "students" as const },
-      right: {
-        label: "Assignments",
-        href: `/course/${courseId}/assignments`,
-        type: "assignments" as const,
-      },
-    };
-  };
-
-  const { left, right } = getNeighbors();
-
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#6aa7d8_0px,#8fbcdf_56px,#eef4fa_220px,#f5f5f7_380px)] text-[#1d1d1f]">
       <header className="sticky top-0 z-50 border-b border-[#407EA7]/10 bg-white/90 backdrop-blur-md">
@@ -89,7 +57,7 @@ export default function CourseLayout({
                 href={`/course/${courseId}/assignments`}
                 className={`${itemBase} ${current === "assignments" ? activeItem : inactiveItem}`}
               >
-                Assignments
+                Assignments 
                 {current === "assignments" && activeItem}
               </Link>
 
@@ -110,15 +78,6 @@ export default function CourseLayout({
                 Grades
                 {current === "grades" && activeItem}
               </Link>
-
-             
-              <button
-                type="button"
-                onClick={onAddClick}
-                className={`${itemBase} text-[#407EA7]/70 hover:text-[#407EA7] hover:bg-slate-50 px-3 rounded-lg transition-colors`}
-              >
-                + Add Assignment
-              </button>
             </nav>
           </div>
 

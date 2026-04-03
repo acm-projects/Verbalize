@@ -6,7 +6,7 @@ import CreateModal from "../components/shared/CreateModal";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 
-// Define course type from database
+// Define course type
 type Course = {
   id: string;
   course_name: string;
@@ -14,13 +14,27 @@ type Course = {
   created_at: string;
 };
 
-// Color themes for different classes
+
 const cardThemes = [
-  { from: "from-[#407EA7]", to: "to-[#2D5A78]", shadow: "shadow-[#407EA7]/10", progress: "text-[#407EA7]", bgProgress: "bg-[#407EA7]" },
-  { from: "from-[#5D5CDE]", to: "to-[#4847B0]", shadow: "shadow-[#5D5CDE]/10", progress: "text-[#5D5CDE]", bgProgress: "bg-[#5D5CDE]" },
-  { from: "from-[#0F766E]", to: "to-[#0D9488]", shadow: "shadow-[#0F766E]/10", progress: "text-[#0F766E]", bgProgress: "bg-[#0F766E]" },
-  { from: "from-[#6366F1]", to: "to-[#4F46E5]", shadow: "shadow-[#6366F1]/10", progress: "text-[#6366F1]", bgProgress: "bg-[#6366F1]" },
+  { from: "from-[#407EA7]", to: "to-[#2D5A78]", shadow: "shadow-[#407EA7]/10", progress: "text-[#407EA7]", bgProgress: "bg-[#407EA7]" }, 
+  { from: "from-[#5D5CDE]", to: "to-[#4847B0]", shadow: "shadow-[#5D5CDE]/10", progress: "text-[#5D5CDE]", bgProgress: "bg-[#5D5CDE]" }, 
+  { from: "from-[#0F766E]", to: "to-[#0D9488]", shadow: "shadow-[#0F766E]/10", progress: "text-[#0F766E]", bgProgress: "bg-[#0F766E]" }, 
+  { from: "from-[#6366F1]", to: "to-[#4F46E5]", shadow: "shadow-[#6366F1]/10", progress: "text-[#6366F1]", bgProgress: "bg-[#6366F1]" }, 
+  { from: "from-[#8B5CF6]", to: "to-[#7C3AED]", shadow: "shadow-[#8B5CF6]/10", progress: "text-[#8B5CF6]", bgProgress: "bg-[#8B5CF6]" }, 
+  { from: "from-[#F43F5E]", to: "to-[#E11D48]", shadow: "shadow-[#F43F5E]/10", progress: "text-[#F43F5E]", bgProgress: "bg-[#F43F5E]" }, 
+  { from: "from-[#D97706]", to: "to-[#B45309]", shadow: "shadow-[#D97706]/10", progress: "text-[#D97706]", bgProgress: "bg-[#D97706]" }, 
+  { from: "from-[#2563EB]", to: "to-[#1D4ED8]", shadow: "shadow-[#2563EB]/10", progress: "text-[#2563EB]", bgProgress: "bg-[#2563EB]" }, 
 ];
+
+
+const getThemeIndexByName = (name: string) => {
+  let hash = 0;
+  
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash) % cardThemes.length;
+};
 
 export default function DashboardPage() {
   const [openClassModal, setOpenClassModal] = useState(false);
@@ -28,13 +42,13 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
-  // Fetch courses from Supabase on mount
+  
   const fetchCourses = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("Course_Details")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("course_name", { ascending: true });
 
     if (error) {
       console.error("Error fetching courses:", error);
@@ -48,7 +62,6 @@ export default function DashboardPage() {
     fetchCourses();
   }, []);
 
-  // Mock progress data since it's not in the current DB schema
   const getMockProgress = (id: any) => {
     const num = Number(id) || 0;
     return {
@@ -61,7 +74,6 @@ export default function DashboardPage() {
   return (
     <>
       <main className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-20">
-        {/* Header */}
         <header className="sticky top-0 z-50 border-b border-[#407EA7]/10 bg-white/80 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-8">
             <div className="flex items-center gap-3">
@@ -96,7 +108,6 @@ export default function DashboardPage() {
           </section>
         </motion.div>
 
-        {/* Grid Section */}
         <section className="px-8 max-w-[1400px] mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -113,9 +124,12 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {courses.map((course, index) => {
+                {courses.map((course) => {
                   const mockData = getMockProgress(course.id);
-                  const theme = cardThemes[index % cardThemes.length];
+                  
+                  
+                  const themeIndex = getThemeIndexByName(course.course_name);
+                  const theme = cardThemes[themeIndex];
 
                   return (
                     <Link
@@ -123,7 +137,6 @@ export default function DashboardPage() {
                       href={`/course/${course.id}/assignments`}
                       className={`group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl ${theme.shadow}`}
                     >
-                      {/* Card Header with Dynamic Gradient */}
                       <div className={`h-28 relative p-5 text-white`}>
                         <div className={`absolute inset-0 bg-gradient-to-br ${theme.from} ${theme.to} opacity-90`} />
                         <div className="relative z-10">
@@ -138,7 +151,6 @@ export default function DashboardPage() {
                         </div>
                       </div>
 
-                      {/* Card Content */}
                       <div className="p-4 flex-1 flex flex-col justify-between">
                         <div className="flex justify-between items-center text-xs text-slate-500 mb-4">
                           <span>{mockData.students} Students</span>
@@ -147,7 +159,6 @@ export default function DashboardPage() {
                           </div>
                         </div>
 
-                        {/* Progress Indicators */}
                         <div className="space-y-3">
                           <div>
                             <div className="flex justify-between text-[10px] mb-1 font-bold text-slate-400 uppercase">
@@ -177,7 +188,6 @@ export default function DashboardPage() {
           </motion.div>
         </section>
 
-        {/* Floating Action Button */}
         <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -197,7 +207,7 @@ export default function DashboardPage() {
         mode="class"
         onClose={() => {
           setOpenClassModal(false);
-          fetchCourses(); // Refresh data without full page reload
+          fetchCourses(); 
         }}
       />
     </>

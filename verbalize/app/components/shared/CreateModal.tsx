@@ -57,7 +57,12 @@ export default function CreateModal({
     onClose();
   };
 
-
+  const warningMessange = () => {
+    return (
+      <div className="mb-4 rounded-lg bg-yellow-50 p-4"> 
+      </div>
+    )
+  }
   const extractText = async (file: File) => {
     const pdfjs = await import('pdfjs-dist');
     pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;

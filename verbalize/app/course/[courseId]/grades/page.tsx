@@ -1,12 +1,7 @@
 "use client";
 
-<<<<<<< HEAD
-import { use } from "react";
-import { useState, useEffect } from "react";
-=======
 
 import { useState, useEffect, use } from "react";
->>>>>>> 6814727ad31de9ad8256adc1f0e8787dae68a9ee
 import CreateModal from "@/app/components/shared/CreateModal";
 import { createClient } from "@/lib/supabase/client";
 
@@ -93,12 +88,6 @@ export default function GradesPage({ params }: { params: Promise<{ courseId: str
             
             <p className="text-sm text-slate-500">Course ID: {courseId}</p>
           </div>
-          <button
-            onClick={() => setOpenModal(true)}
-            className="rounded-xl bg-[#5b92b9] px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-[#4a7a9c] transition-colors"
-          >
-            + Add Assignment
-          </button>
         </div>
 
         <div className="px-2 py-2">
