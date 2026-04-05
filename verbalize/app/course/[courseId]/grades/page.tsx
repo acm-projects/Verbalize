@@ -52,9 +52,32 @@ export default function GradesPage({ params }: { params: Promise<{ courseId: str
       if (!courseId) return;
 
       const { data, error } = await supabase
-        .from("Students") 
-        .select("*")
-        .eq("course_id", courseId); 
+        .from("Course_Students") 
+        .select(`
+          *,
+          Students (
+            id,
+            last_name,
+            first_name,
+            netID
+          )
+        `)
+        .eq("course_id", courseId);
+
+        if (!data) return;
+        
+        const mappedStudents = data.map((record: any) => {
+        // Access the nested student object
+              const s = record.Students; 
+              
+              return {
+                id: s?.id || record.id,
+                lastName: s?.last_name || "Unknown",
+                firstName: s?.first_name || "Unknown",
+                netId: s?.netID || "N/A",
+                grade: record.grade || "A" // Grade usually lives on the join table
+              };
+        });
 
       if (error) {
         console.error("Error fetching students:", error);

@@ -5,18 +5,11 @@ export async function POST(req: Request) {
   const { zipPath, assignmentId } = await req.json();
 
   try {
-    // In your route handler
-try {
-  await processMasterZip(assignmentId, zipPath);
-  return NextResponse.json({ message: "Processed successfully" });
-} catch (error: any) {
-  console.error("DETAILED_ERROR:", error); // Check your terminal logs for this!
-  return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
-}
-
+    // 调用分离出去的核心解压逻辑
+    await processMasterZip(assignmentId, zipPath);
     return NextResponse.json({ message: "Processed successfully" });
   } catch (error: any) {
-    console.log(error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("DETAILED_ERROR:", error); 
+    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
 }
