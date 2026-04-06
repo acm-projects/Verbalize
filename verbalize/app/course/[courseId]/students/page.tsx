@@ -95,6 +95,40 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
     fetchStudents();
   }, [courseId]); 
 
+  const handleViewTranscript = async (studentId?: string) => {
+  if (!studentId) return;
+
+  // 1. Get latest submission for this student
+  const { data: submissionData, error: subError } = await supabase
+    .from("Submissions")
+    .select("id")
+    .eq("student_id", studentId)
+    .order("submitted_at", { ascending: false })
+    .limit(1);
+
+  if (subError || !submissionData?.length) {
+    console.error("Submission fetch error:", subError);
+    return;
+  }
+
+  const submissionId = submissionData[0].id;
+
+  // 2. Get transcript entries (3 rows)
+  const { data, error } = await supabase
+    .from("Results")
+    .select("transcript, summary, call_id")
+    .eq("submission_id", submissionId)
+    .order("call_id", { ascending: true });
+
+  if (error) {
+    console.error("Transcript fetch error:", error);
+    return;
+  }
+
+  setSelectedTranscript(data || []);
+  setModalType("transcript");
+};
+
   const badgeStyle = (grade: string) => {
     if (grade === "A") return "bg-green-100 text-green-700";
     if (grade === "B") return "bg-blue-100 text-blue-700";
@@ -164,7 +198,7 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
 
                     <div>
                       <span
-                        //onClick={() => handleViewTranscript(student.id)}
+                        onClick={() => handleViewTranscript(student.id)}
                         className="font-semibold text-[#4f87b0] cursor-pointer hover:text-blue-700 underline"
                       >
                         Transcript
