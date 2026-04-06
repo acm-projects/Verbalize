@@ -136,13 +136,13 @@ export default function GraphicDashboard() {
 
           <div className="bg-white border border-slate-100 p-5 rounded-xl shadow-sm">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter tracking-widest">Low Score Warnings</p>
-            <h4 className="text-3xl font-black text-red-400 mt-1">
+            <h4 className="text-2xl font-black text-red-400 mt-1">
               {currentSet.data[0].students + currentSet.data[1].students}
             </h4>
             <p className="text-xs text-slate-400 mt-1">Students below 40% threshold</p>
           </div>
 
-          <div className="bg-slate-900 p-5 py-5 rounded-xl text-white flex-1 flex flex-col justify-between">
+          <div className="bg-slate-200 px-5 py-10  rounded-xl text-white flex-1 flex flex-col justify-between">
             <div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Active Filter</p>
               <h4 className="text-lg font-bold mt-1 text-[#407EA7]">{selectedAssignment}</h4>
