@@ -16,7 +16,7 @@
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.99.1",
     "adm-zip": "^0.5.16",
-    "framer-motion": "^12.35.0",
+    "framer-motion": "^12.38.0",
     "groq-sdk": "^1.1.2",
     "jszip": "^3.10.1",
     "next": "16.1.6",
@@ -25,6 +25,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.8.1",
+    "redux": "^5.0.1",
     "typewriter-effect": "^2.22.0"
   },
   "devDependencies": {
