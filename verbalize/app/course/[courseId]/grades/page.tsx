@@ -1,13 +1,12 @@
 "use client";
 
-
 import { useState, useEffect, use } from "react";
 import CreateModal from "@/app/components/shared/CreateModal";
 import { createClient } from "@/lib/supabase/client";
 
 type AssignmentDetail = {
   name: string;
-  status: "Completed" | "Pending" | "Missed";
+  status: "Completed" | "Pending";
   score: number;
 };
 
@@ -15,181 +14,236 @@ type StudentGrade = {
   lastName: string;
   firstName: string;
   netId: string;
-  mainAssignment: string;
-  callStatus: "Completed" | "Pending" | "Missed";
   avgGrade: number;
   details: AssignmentDetail[];
 };
 
-function getStatusBadge(status: "Completed" | "Pending" | "Missed") {
+function getStatusStyle(status: "Completed" | "Pending") {
   if (status === "Completed") return "bg-green-100 text-green-700";
-  if (status === "Pending") return "bg-yellow-100 text-yellow-700";
-  return "bg-red-100 text-red-700";
+  return "bg-yellow-100 text-yellow-700";
 }
 
-function getDetailBorder(status: "Completed" | "Pending" | "Missed") {
-  if (status === "Completed") return "border-green-300";
-  if (status === "Pending") return "border-yellow-300";
-  return "border-red-300";
-}
-
-
-export default function GradesPage({ params }: { params: Promise<{ courseId: string }> }) {
+export default function GradesPage({ params, }: { params: Promise<{ courseId: string }>;}) {
   const [openModal, setOpenModal] = useState(false);
+  const [students, setStudents] = useState<StudentGrade[]>([]);
+  const [loading, setLoading] = useState(true);
   const [openRows, setOpenRows] = useState<number[]>([]);
-  
-  
+
+  const supabase = createClient();
   const resolvedParams = use(params);
   const courseId = Number(resolvedParams.courseId);
 
-  const [students, setStudents] = useState<StudentGrade[]>([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-
   useEffect(() => {
     async function fetchStudents() {
-      
       if (!courseId) return;
 
-      const { data, error } = await supabase
-        .from("Students") 
-        .select("*")
-        .eq("course_id", courseId); 
+      const { data: courseStudents, error } = await supabase
+        .from("Course_Students")
+        .select(`
+          student_id,
+          Students (
+            id,
+            last_name,
+            first_name,
+            netID
+          )
+        `)
+        .eq("course_id", courseId);
 
       if (error) {
-        console.error("Error fetching students:", error);
-      } else if (data && data.length > 0) {
-        console.log("Real student data:", data);
-      } else {
-        console.log("No real data yet, using mock fallback.");
-        setStudents(getMockFallbackData());
+        console.error(error);
+        setLoading(false);
+        return;
       }
+
+      const finalStudents: StudentGrade[] = await Promise.all(
+        courseStudents.map(async (record: any) => {
+          const s = record.Students;
+
+          const { data: submissions } = await supabase
+            .from("Submissions")
+            .select(`
+              id,
+              assignment_id,
+              Results ( confidence_score )
+            `)
+            .eq("student_id", s.id);
+
+          let total = 0;
+          let count = 0;
+
+          const details: AssignmentDetail[] = [];
+
+          submissions?.forEach((sub: any) => {
+            const results = sub.Results || [];
+
+            let grade = 0;
+
+            results.forEach((r: any) => {
+              grade += r.confidence_score || 0;
+            });
+
+            if (results.length > 0) {
+              grade /= results.length;
+              total += grade;
+              count++;
+            }
+
+            details.push({
+              name: `Assignment ${sub.assignment_id}`,
+              status: results.length > 0 ? "Completed" : "Pending",
+              score: Math.round(grade || 0),
+            });
+          });
+
+          const avgGrade = count > 0 ? total / count : 0;
+
+          return {
+            lastName: s?.last_name || "Unknown",
+            firstName: s?.first_name || "Unknown",
+            netId: s?.netID || "N/A",
+            avgGrade: Math.round(avgGrade),
+            details,
+          };
+        })
+      );
+
+      setStudents(finalStudents);
       setLoading(false);
     }
 
     fetchStudents();
-  }, [courseId]); 
+  }, [courseId]);
 
   const toggleRow = (index: number) => {
     setOpenRows((prev) =>
-      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+      prev.includes(index)
+        ? prev.filter((i) => i !== index)
+        : [...prev, index]
     );
   };
 
   return (
     <>
       <div className="h-full">
-        {/* Header */}
+        {/* HEADER */}
         <div className="flex justify-between items-center px-2 py-4 border-b border-gray-100 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Grades</h1>
-            
             <p className="text-sm text-slate-500">Course ID: {courseId}</p>
           </div>
+
+          <button
+            onClick={() => setOpenModal(true)}
+            className="rounded-xl bg-[#5b92b9] px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-[#4a7a9c] transition-colors"
+          >
+            + Add Assignment
+          </button>
         </div>
 
-        <div className="px-2 py-2">
-          {/* Search Bar */}
-          <div className="mb-4 flex items-center justify-between">
-            <div className="relative w-72">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                className="block w-full rounded-lg border border-gray-200 bg-gray-50 p-2 pl-10 text-sm text-gray-900 focus:border-[#5b92b9] focus:ring-[#5b92b9] outline-none transition-all"
-                placeholder="Search students..."
-              />
+        {/* CONTENT */}
+        <div className="space-y-8 px-2 py-2">
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5b92b9]" />
             </div>
-            <div className="flex gap-2">
-               <button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-                  Filter
-               </button>
+          ) : students.length === 0 ? (
+            <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
+              <h3 className="text-lg font-medium text-slate-600 mb-2">
+                No students yet
+              </h3>
+              <p className="text-sm text-slate-400">
+                Students will appear once submissions are made.
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              {students.map((student, index) => {
+                const isOpen = openRows.includes(index);
 
-          <div className="overflow-hidden rounded-xl border border-[#edf2f7]">
-            {/* Table Header */}
-            <div className="grid grid-cols-[46px_1.1fr_1.1fr_1fr_1.2fr_1.1fr_0.9fr_54px] items-center gap-4 bg-[#f3f4f6] px-5 py-5 text-[14px] font-semibold text-[#1f2a44]">
-              <div />
-              <div>Last Name</div>
-              <div>First Name</div>
-              <div>Net ID</div>
-              <div>Assignments</div>
-              <div>Call Status</div>
-              <div>AVG Grade</div>
-              <div />
-            </div>
+                return (
+                  <div key={index}>
+                    {/* STUDENT CARD */}
+                    <div className="flex items-center gap-4 rounded-xl border border-blue-200 bg-[#fbfbfc] px-4 py-4 shadow-[0_4px_16px_rgba(15,23,42,0.04)]">
+                      
+                      {/* expand */}
+                      <button
+                        onClick={() => toggleRow(index)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5b92b9] text-white"
+                      >
+                        {isOpen ? "-" : "+"}
+                      </button>
 
-            {/* Table Body */}
-            <div className="bg-white px-3 py-4">
-              {loading ? (
-                <div className="flex justify-center items-center py-10">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5b92b9]"></div>
-                </div>
-              ) : students.length === 0 ? (
-                 <div className="text-center text-slate-400 py-10">
-                   No students found for this course.
-                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {students.map((student, index) => {
-                    const isOpen = openRows.includes(index);
-                    return (
-                      <div key={`${student.netId}-${index}`}>
-                        <div className="grid grid-cols-[46px_1.1fr_1.1fr_1fr_1.2fr_1.1fr_0.9fr_54px] items-center gap-4 rounded-xl text-[13px] border border-sky-200 px-4 py-2">
-                           <button onClick={() => toggleRow(index)} className="flex h-7 w-7 items-center justify-center rounded-[10px] bg-[#5f93b8] text-white shadow-sm transition hover:brightness-105">
-                             <span className="text-white text-lg font-bold">{isOpen ? "-" : "+"}</span>
-                           </button>
-                           <div className="font-semibold text-[#1d1d1f]">{student.lastName}</div>
-                           <div className="font-semibold text-[#1d1d1f]">{student.firstName}</div>
-                           <div className="text-[#6e6e73]">{student.netId}</div>
-                           <div className="font-semibold text-[#4f87b0]">{student.mainAssignment}</div>
-                           <div>
-                             <span className={`rounded-full px-3 py-1 text-[12px] font-bold uppercase tracking-[0.08em] ${getStatusBadge(student.callStatus)}`}>{student.callStatus}</span>
-                           </div>
-                           <div className="text-[20px] font-bold text-[#111827]">{student.avgGrade}</div>
-                           <div />
-                        </div>
-
-                        {isOpen && (
-                          <div className="ml-[58px] mt-3 space-y-3">
-                            {student.details.map((detail, detailIndex) => (
-                              <div key={detailIndex} className={`grid grid-cols-[1.8fr_1fr_0.9fr] items-center rounded-xl border-1 px-5 py-2 ${getDetailBorder(detail.status)}`}>
-                                <div className="font-medium text-[#4b5563] text-[12px]">{detail.name}</div>
-                                <div><span className={`rounded-full px-3 py-1 text-[12px] font-bold uppercase ${getStatusBadge(detail.status)}`}>{detail.status}</span></div>
-                                <div className="text-right text-[20px] font-bold text-[#111827]">{detail.score}</div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                      {/* name */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-[16px] font-semibold text-[#5c8db4]">
+                          {student.firstName} {student.lastName}
+                        </h3>
+                        <p className="text-[13px] text-[#8a8f98]">
+                          {student.netId}
+                        </p>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+
+                      {/* status */}
+                      <div className="w-[140px] text-center">
+                        <p className="text-[12px] uppercase text-[#9ca3af] font-semibold">
+                          Status
+                        </p>
+                        <span
+                          className={`mt-2 inline-block rounded-full px-3 py-1 text-[12px] font-semibold ${getStatusStyle(
+                            student.details.length > 0 ? "Completed" : "Pending"
+                          )}`}
+                        >
+                          {student.details.length > 0 ? "Completed" : "Pending"}
+                        </span>
+                      </div>
+
+                      {/* grade */}
+                      <div className="w-[140px] text-center">
+                        <p className="text-[12px] uppercase text-[#9ca3af] font-semibold">
+                          Avg Grade
+                        </p>
+                        <p className="mt-2 text-[20px] font-bold text-[#1d1d1f]">
+                          {student.avgGrade}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* EXPANDED DETAILS */}
+                    {isOpen && (
+                      <div className="ml-12 mt-3 space-y-3">
+                        {student.details.map((d, i) => (
+                          <div
+                            key={i}
+                            className={`flex items-center justify-between rounded-xl border px-5 py-3 ${getStatusStyle(
+                              d.status
+                            )}`}
+                          >
+                            <div className="text-[13px] font-medium">
+                              {d.name}
+                            </div>
+
+                            <div className="text-[14px] font-semibold">
+                              {d.score}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          )}
         </div>
       </div>
 
       <CreateModal
         open={openModal}
         mode="assignment"
-        
         courseId={courseId}
         onClose={() => setOpenModal(false)}
       />
     </>
   );
-}
-
-function getMockFallbackData(): StudentGrade[] {
-  return [
-    { lastName: "nguyen", firstName: "nguyen", netId: "abc123", mainAssignment: "assignment1", callStatus: "Completed", avgGrade: 100, details: [] },
-    { lastName: "smith", firstName: "john", netId: "js456", mainAssignment: "assignment1", callStatus: "Pending", avgGrade: 0, details: [] }
-  ];
 }
