@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import CreateModal from "@/app/components/shared/CreateModal";
 import { createClient } from "@/lib/supabase/client";
 
+// student structure
 type StudentInfo = {
   id?: string;
   lastName: string;
@@ -12,9 +13,10 @@ type StudentInfo = {
   grade: string;
 };
 
+
 export default function StudentsPage({ params }: { params: Promise<{ courseId: number }> }) {
   const [openModal, setOpenModal] = useState(false);
-  
+
   const [students, setStudents] = useState<StudentInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
@@ -24,6 +26,10 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
 
   useEffect(() => {
     async function fetchStudents() {
+  
+      if (!courseId) return;
+
+      
       const { data, error } = await supabase
         .from("Course_Students") 
         .select(`
@@ -39,8 +45,10 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
 
       if (error) {
         console.error("Error fetching students:", error);
+        
         setStudents(getMockStudents());
       } else if (data && data.length > 0) {
+     
         const mappedStudents = data.map((record: any) => {
         // Access the nested student object
               const s = record.Students; 
@@ -55,13 +63,14 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
         });
         setStudents(mappedStudents);
       } else {
+       
         setStudents([]);
       }
       setLoading(false);
     }
 
     fetchStudents();
-  }, [courseId]);
+  }, [courseId]); 
 
   const badgeStyle = (grade: string) => {
     if (grade === "A") return "bg-green-100 text-green-700";
@@ -72,12 +81,13 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
 
   return (
     <>
-      {/* CourseLayout*/}
+      
       <div className="h-full">
-        {/* Assignments, Grades */}
+        
         <div className="flex justify-between items-center px-2 py-4 border-b border-gray-100 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Students</h1>
+           
             <p className="text-sm text-slate-500">Course ID: {courseId}</p>
           </div>
           <button
@@ -152,6 +162,7 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
       <CreateModal
         open={openModal}
         mode="assignment"
+       
         courseId={courseId}
         onClose={() => setOpenModal(false)}
       />

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { StudentUploader } from "@/lib/StudentUploader";
 import { createClient } from "@/lib/supabase/client";
 
@@ -9,6 +8,7 @@ type CreateModalProps = {
   open: boolean;
   mode: "assignment" | "class";
   onClose: () => void;
+ 
   courseId?: number; 
 };
 
@@ -23,10 +23,13 @@ export default function CreateModal({
   const [nameValue, setNameValue] = useState("");
   const [secondValue, setSecondValue] = useState("");
   const [sectionValue, setSectionValue] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  
+ 
+  const [zipFile, setZipFile] = useState<File | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
 
   if (!open) return null;
 
@@ -38,13 +41,13 @@ export default function CreateModal({
   const secondPlaceholder = isAssignment ? "DD - MM - YYYY" : "Enter class code";
   const thirdLabel = "Section";
   const thirdPlaceholder = "Enter section";
-  const fourthLabel = isAssignment ? "Assignment file" : "Student file";
-
+  
   const resetForm = () => {
     setNameValue("");
     setSecondValue("");
     setSectionValue("");
-    setFile(null);
+    setZipFile(null);
+    setPdfFile(null); 
     setMessage("");
     setLoading(false);
   };
@@ -54,10 +57,10 @@ export default function CreateModal({
     onClose();
   };
 
+
   const extractText = async (file: File) => {
     const pdfjs = await import('pdfjs-dist');
-    pdfjs.GlobalWorkerOptions.workerSrc =
-      `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
@@ -68,13 +71,12 @@ export default function CreateModal({
       const content = await page.getTextContent();
       text += content.items.map((item: any) => item.str).join(' ') + '\n';
     }
-
     return text;
-};
+  };
 
   const handleSubmit = async () => {
-    if (!nameValue.trim() || !file) {
-      setMessage("Please fill in the required name and upload the file.");
+    if (!nameValue.trim()) {
+      setMessage("Please fill in the required name.");
       return;
     }
 
@@ -83,13 +85,14 @@ export default function CreateModal({
 
     try {
       if (isAssignment) {
-        if (!courseId) throw new Error("Missing courseId");
-        if (!pdfFile) throw new Error("Please upload a PDF file");
+        
+        if (!courseId) throw new Error("Missing courseId. Please refresh the page.");
+        if (!zipFile || !pdfFile) throw new Error("Please upload both the Master ZIP and Instruction PDF.");
 
-        setMessage("Creating assignment...");
-
-        // 1. Create assignment
-        const { data: assignmentData, error } = await supabase
+        setMessage("1/5 Creating assignment record...");
+        
+        
+        const { data: assignmentData, error: assignmentError } = await supabase
           .from("Assignments")
           .insert({
             assignment_name: nameValue,
@@ -98,58 +101,78 @@ export default function CreateModal({
           .select()
           .single();
 
-        if (error) throw error;
-
+        if (assignmentError) throw assignmentError;
         const assignmentId = assignmentData.id;
 
-        // 2. Extract text from PDF
-        setMessage("Reading PDF...");
+        setMessage("2/5 Reading PDF instructions...");
+        
         const aiText = await extractText(pdfFile);
 
-        // 3. Upload files
-        setMessage("Uploading files...");
-        const zipPath = `master_zips/${Date.now()}-${file.name}`;
+        setMessage("3/5 Uploading files to storage...");
+       
+        const zipPath = `master_zips/${Date.now()}-${zipFile.name}`;
         const pdfPath = `pdf_instruction/${Date.now()}-${pdfFile.name}`;
 
-        await supabase.storage.from("AssignmentsBucket").upload(zipPath, file);
+        await supabase.storage.from("AssignmentsBucket").upload(zipPath, zipFile);
         await supabase.storage.from("AssignmentsBucket").upload(pdfPath, pdfFile);
 
-        // 4. Update DB
+       
         await supabase
           .from("Assignments")
-          .update({
-            instruction_text: aiText,
-            submissions: zipPath,
+          .update({ 
+            instruction_text: aiText, 
+            submissions: zipPath 
           })
           .eq("id", assignmentId);
 
-        // 5. Process submissions
-        setMessage("Processing submissions...");
-        await fetch("/api/processSubmissions", {
+        setMessage("4/5 Processing student submissions...");
+        
+        const processRes = await fetch("/api/processSubmissions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            zipPath,
-            assignmentId,
-          }),
+          body: JSON.stringify({ zipPath, assignmentId }),
         });
+        if (!processRes.ok) throw new Error("Backend processing failed.");
 
-        // 6. Generate AI questions
-        setMessage("Generating AI questions...");
-        await fetch("/api/generate-questions", {
-          method: "POST",
+        setMessage("5/5 Generating AI questions...");
+        
+
+        // Generate AI Questions
+        const aiResponse = await fetch("/api/generate-questions", {
+          method: "POST", 
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            assignmentId,
-            instructionText: aiText,
+          body: JSON.stringify({ 
+            assignmentId: assignmentId, 
+            instructionText: aiText 
           }),
         });
+        const { data: subs } = await supabase
+          .from("Submissions")
+          .select("student_id")
+          .eq("assignment_id", assignmentId);
 
+      if (subs) {
+        // Loop through each student and generate their 2 custom questions
+        for (const sub of subs) {
+          await fetch("/api/generate-student-questions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              assignmentId: assignmentId, 
+              studentId: sub.student_id 
+            })
+          });
+        }
+      }
+        
+        if (!aiResponse.ok) throw new Error("AI Question generation failed.");
+        
         setMessage("Assignment created successfully!");
 
       } else {
-        if (!sectionValue.trim()) {
-          throw new Error("Please enter a section for the class.");
+      
+        if (!sectionValue.trim() || !zipFile) {
+          throw new Error("Please enter a section and upload the student CSV.");
         }
 
         setMessage("Creating class...");
@@ -167,8 +190,8 @@ export default function CreateModal({
         if (!res.ok) throw new Error(data.error || "Failed to create course");
 
         setMessage("Uploading and parsing student CSV...");
-
-        const uploader = new StudentUploader(supabase, file, data.id);
+       
+        const uploader = new StudentUploader(supabase, zipFile, data.id);
         await uploader.process();
 
         setMessage("Class created successfully!");
@@ -188,22 +211,12 @@ export default function CreateModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-white/18 backdrop-blur-md"
-        onClick={handleClose}
-      />
+      <div className="absolute inset-0 bg-white/18 backdrop-blur-md" onClick={handleClose} />
 
-      {/* Modal */}
-      <div className="relative z-10 w-[min(92vw,620px)] rounded-xl bg-white px-10 py-10 shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
-        <button
-          onClick={handleClose}
-          className="absolute right-8 top-8 text-[#c7c9cf] transition hover:text-[#8a8f98]"
-          aria-label="Close modal"
-        >
+      <div className="relative z-10 w-[min(92vw,620px)] rounded-[36px] bg-white px-10 py-10 shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
+        <button onClick={handleClose} className="absolute right-8 top-8 text-[#c7c9cf] transition hover:text-[#8a8f98]">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-6 w-6">
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
+            <path d="M18 6 6 18" /><path d="m6 6 12 12" />
           </svg>
         </button>
 
@@ -212,11 +225,9 @@ export default function CreateModal({
         </h2>
 
         <div className="mt-8 space-y-6">
-          {/* Name input */}
+          
           <div>
-            <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
-              {nameLabel}
-            </label>
+            <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">{nameLabel}</label>
             <input
               type="text"
               value={nameValue}
@@ -227,12 +238,10 @@ export default function CreateModal({
             />
           </div>
 
-          {/* Secondary inputs */}
+          
           <div className="grid grid-cols-2 gap-5">
             <div>
-              <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
-                {secondLabel}
-              </label>
+              <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">{secondLabel}</label>
               <input
                 type="text"
                 value={secondValue}
@@ -243,12 +252,9 @@ export default function CreateModal({
               />
             </div>
 
-            {/* Section input (Class mode only) */}
             {!isAssignment && (
               <div>
-                <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
-                  {thirdLabel}
-                </label>
+                <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">{thirdLabel}</label>
                 <input
                   type="text"
                   value={sectionValue}
@@ -261,52 +267,49 @@ export default function CreateModal({
             )}
           </div>
 
-          {/* File upload */}
+          
           <div>
             <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
-              {fourthLabel}
+              {isAssignment ? "Master ZIP File" : "Student CSV File"}
             </label>
             <label className="flex h-14 w-full cursor-pointer items-center justify-center rounded-[16px] bg-[#f3f4f6] px-4 text-[16px] text-[#9ca3af] transition hover:bg-[#eceef2]">
-              <span className="truncate">{file ? file.name : `Upload ${isAssignment ? '.zip' : '.csv'} file`}</span>
+              <span className="truncate">{zipFile ? zipFile.name : `Upload ${isAssignment ? '.zip' : '.csv'} file`}</span>
               <input
                 type="file"
                 accept={isAssignment ? ".zip" : ".csv"}
                 className="hidden"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                onChange={(e) => setZipFile(e.target.files?.[0] || null)}
                 disabled={loading}
               />
             </label>
           </div>
 
-        <div>
-        {isAssignment && (<div>
-            <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
-              Instruction PDF
-            </label>
-            <label className="flex h-14 w-full cursor-pointer items-center justify-center rounded-[16px] bg-[#f3f4f6] px-4 text-[16px] text-[#9ca3af]">
-              <span className="truncate">
-                {pdfFile ? pdfFile.name : "Upload .pdf file"}
-              </span>
-              <input
-                type="file"
-                accept=".pdf"
-                className="hidden"
-                onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-              />
-            </label>
-          </div>)}
-          </div>
+          
+          {isAssignment && (
+            <div>
+              <label className="mb-3 block text-[16px] font-semibold text-[#1d1d1f]">
+                Instruction PDF
+              </label>
+              <label className="flex h-14 w-full cursor-pointer items-center justify-center rounded-[16px] bg-[#f3f4f6] px-4 text-[16px] text-[#9ca3af] transition hover:bg-[#eceef2]">
+                <span className="truncate">{pdfFile ? pdfFile.name : "Upload .pdf file"}</span>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                  disabled={loading}
+                />
+              </label>
+            </div>
+          )}
 
+         
           {message && <p className="text-[14px] font-medium text-[#5f6672]">{message}</p>}
         </div>
 
-        {/* Footer */}
+       
         <div className="mt-8 flex items-center justify-end gap-4">
-          <button
-            onClick={handleClose}
-            type="button"
-            className="rounded-full px-5 py-3 text-[16px] font-semibold text-[#8a8f98] transition hover:text-[#5f6672]"
-          >
+          <button onClick={handleClose} type="button" className="rounded-full px-5 py-3 text-[16px] font-semibold text-[#8a8f98] transition hover:text-[#5f6672]">
             Cancel
           </button>
 

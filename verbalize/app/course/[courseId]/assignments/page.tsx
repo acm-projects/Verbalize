@@ -36,18 +36,45 @@ function getProgressColor(status: AssignmentItem["status"]) {
   return "#e5e7eb";
 }
 
-export default function AssignmentsPage({ params }: { params: Promise<{ courseId: number }> }) {
+export default function AssignmentsPage({ params }: { params: Promise<{ courseId: string }> }) {
   const [openModal, setOpenModal] = useState(false);
-  
   const [sections, setSections] = useState<AssignmentSection[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   const resolvedParams = use(params);
-  const courseId = resolvedParams.courseId;
+  const courseId = Number(resolvedParams.courseId);
+
+  
+  const handleSendEmail = async (assignmentId?: string) => {
+    if (!assignmentId) return alert("Assignment ID missing!");
+    
+    
+    alert("Sending PIN code emails to students... Please wait."); 
+    
+    try {
+      const res = await fetch("/api/notify-students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        
+        body: JSON.stringify({ assignmentId }), 
+      });
+
+      if (res.ok) {
+        alert("✅ Emails sent successfully with student PINs!");
+      } else {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to send emails");
+      }
+    } catch (e: any) {
+      alert("Email Error: " + e.message);
+    }
+  };
 
   useEffect(() => {
     async function fetchAssignments() {
+      if (!courseId) return;
+
       const { data, error } = await supabase
         .from("Assignments") 
         .select("*")
@@ -73,19 +100,13 @@ export default function AssignmentsPage({ params }: { params: Promise<{ courseId
           };
         });
 
-        //All Assignments
-        setSections([
-          {
-            title: "All Assignments",
-            items: mappedItems,
-          },
-        ]);
+        setSections([{ title: "All Assignments", items: mappedItems }]);
       }
       setLoading(false);
     }
 
     fetchAssignments();
-  }, [courseId]);
+  }, [courseId]); 
 
   return (
     <>
@@ -94,6 +115,7 @@ export default function AssignmentsPage({ params }: { params: Promise<{ courseId
         <div className="flex justify-between items-center px-2 py-4 border-b border-gray-100 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Assignments</h1>
+            
             <p className="text-sm text-slate-500">Course ID: {courseId}</p>
           </div>
           <button
@@ -104,6 +126,7 @@ export default function AssignmentsPage({ params }: { params: Promise<{ courseId
           </button>
         </div>
 
+        
         <div className="space-y-8 px-2 py-2">
           {loading ? (
             <div className="flex justify-center items-center py-20">
@@ -184,7 +207,12 @@ export default function AssignmentsPage({ params }: { params: Promise<{ courseId
                       </button>
 
                       {/* email button */}
-                      <button type="button" className="shrink-0 rounded-xl bg-[#5b92b9] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_8px_18px_rgba(91,146,185,0.25)] transition hover:brightness-105">
+                      <button 
+                        type="button" 
+                       
+                        onClick={() => handleSendEmail(item.id)}
+                        className="shrink-0 rounded-xl bg-[#5b92b9] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_8px_18px_rgba(91,146,185,0.25)] transition hover:brightness-105"
+                      >
                         EMAIL
                       </button>
                     </div>

@@ -23,9 +23,20 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchCourses() {
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.error("No logged-in user");
+        return;
+      }
+
       const { data, error } = await supabase
         .from("Course_Details")
         .select("*")
+        .eq("professor_id", user.id) 
         .order("created_at", { ascending: false }); 
 
       if (error) {
