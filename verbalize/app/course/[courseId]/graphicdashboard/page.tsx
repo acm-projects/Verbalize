@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, use } from 'react';
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   LineChart, Line
 } from 'recharts';
@@ -45,7 +45,7 @@ export default function GraphicDashboard({ params }: { params: Promise<{ courseI
 
         const title = assignment?.assignment_name || `Assignment ${sub.assignment_id}`;
         const scores = sub.Results?.map((r: any) => r.confidence_score).filter((s: any) => s !== null) || [];
-        
+
         if (!grouped[title]) grouped[title] = [];
         grouped[title].push(...scores);
       });
@@ -55,7 +55,7 @@ export default function GraphicDashboard({ params }: { params: Promise<{ courseI
 
       Object.entries(grouped).forEach(([title, scores]: [string, any]) => {
         if (scores.length === 0) return;
-        
+
         const avg = scores.reduce((a: number, b: number) => a + b, 0) / scores.length;
         const ranges = [
           { range: "0-20", students: scores.filter((s: number) => s < 20).length },
@@ -78,12 +78,13 @@ export default function GraphicDashboard({ params }: { params: Promise<{ courseI
   }, [courseId]);
 
   const currentSet = useMemo(() => assignmentData[selectedAsgn] || null, [selectedAsgn, assignmentData]);
+  console.log("Current Set:", currentSet);
   const trendData = useMemo(() => trendRange === "All" ? trendDataList : trendDataList.slice(-parseInt(trendRange)), [trendRange, trendDataList]);
 
   if (loading) return <div className="p-20 text-center animate-pulse text-slate-400">Fetching Course Analytics...</div>;
 
   return (
-    <div className="h-full space-y-6">
+    <div className="h-full space-y-6 pb-12">
       <div className="flex justify-between items-center px-2 py-4 border-b border-gray-100">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Score Analytics</h1>
@@ -128,13 +129,19 @@ export default function GraphicDashboard({ params }: { params: Promise<{ courseI
               <p className="text-[10px] font-black text-[#407EA7] uppercase">Avg. Understanding</p>
               <h4 className="text-2xl font-black text-slate-800 mt-1">{currentSet.avg}%</h4>
               <div className="mt-4 h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                 <motion.div initial={{ width: 0 }} animate={{ width: `${currentSet.avg}%` }} transition={{ duration: 1 }} className="h-full bg-[#407EA7]" />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${currentSet.avg}%` }} transition={{ duration: 1 }} className="h-full bg-[#407EA7]" />
               </div>
             </motion.div>
             <div className="bg-white border border-slate-100 p-6 rounded-xl shadow-sm">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Integrity Alert</p>
-              <h4 className="text-2xl font-black text-red-400 mt-1">{currentSet.data[0].students + currentSet.data[1].students}</h4>
-              <p className="text-xs text-slate-400 mt-1 italic">Students in low-confidence range</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Integrity Alert
+              </p>
+              <h4 className="text-3xl font-black text-red-500 mt-1">
+                {currentSet?.data ? (currentSet.data[0].students + currentSet.data[1].students) : 0}
+              </h4>
+              <p className="text-xs text-slate-400 mt-1 italic">
+                Students in low-confidence range
+              </p>
             </div>
           </div>
 
@@ -147,15 +154,46 @@ export default function GraphicDashboard({ params }: { params: Promise<{ courseI
                 ))}
               </div>
             </div>
+
             <div className="h-[200px] w-full">
               {isClient && (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trendData} margin={{ top: 5, right: 20, left: -20, bottom: 0 }}>
+                  <LineChart data={trendData} margin={{ top: 5, right: 30, left: -20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
-                    <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none' }} />
-                    <Line type="monotone" dataKey="avg" stroke="#407EA7" strokeWidth={3} dot={{ r: 4, fill: "#407EA7", stroke: "#fff" }} />
+
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 500 }}
+                      dy={10}
+                    />
+
+                    <YAxis
+                      domain={[0, 100]}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#94a3b8', fontSize: 10 }}
+                      tickFormatter={(val) => `${val}%`}
+                    />
+
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: '12px',
+                        border: 'none',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                      }}
+                      formatter={(value: any) => [`${value}%`, 'Average Score']}
+                    />
+
+                    <Line
+                      type="monotone"
+                      dataKey="avg"
+                      stroke="#407EA7"
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: "#407EA7", stroke: "#fff", strokeWidth: 2 }}
+                      activeDot={{ r: 6 }}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               )}
