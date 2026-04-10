@@ -57,7 +57,12 @@ export default function CreateModal({
     onClose();
   };
 
-
+  const warningMessange = () => {
+    return (
+      <div className="mb-4 rounded-lg bg-yellow-50 p-4"> 
+      </div>
+    )
+  }
   const extractText = async (file: File) => {
     const pdfjs = await import('pdfjs-dist');
     pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -136,11 +141,35 @@ export default function CreateModal({
 
         setMessage("5/5 Generating AI questions...");
         
+
+        // Generate AI Questions
         const aiResponse = await fetch("/api/generate-questions", {
           method: "POST", 
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ assignmentId, instructionText: aiText }),
+          body: JSON.stringify({ 
+            assignmentId: assignmentId, 
+            instructionText: aiText 
+          }),
         });
+        const { data: subs } = await supabase
+          .from("Submissions")
+          .select("student_id")
+          .eq("assignment_id", assignmentId);
+
+      if (subs) {
+        // Loop through each student and generate their 2 custom questions
+        for (const sub of subs) {
+          await fetch("/api/generate-student-questions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              assignmentId: assignmentId, 
+              studentId: sub.student_id 
+            })
+          });
+        }
+      }
+        
         if (!aiResponse.ok) throw new Error("AI Question generation failed.");
         
         setMessage("Assignment created successfully!");
@@ -167,7 +196,7 @@ export default function CreateModal({
 
         setMessage("Uploading and parsing student CSV...");
        
-        const uploader = new StudentUploader(supabase, zipFile, data.id);
+        const uploader = new StudentUploader(supabase, zipFile, data.courseId);
         await uploader.process();
 
         setMessage("Class created successfully!");
@@ -186,7 +215,7 @@ export default function CreateModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center text-black">
       <div className="absolute inset-0 bg-white/18 backdrop-blur-md" onClick={handleClose} />
 
       <div className="relative z-10 w-[min(92vw,620px)] rounded-[36px] bg-white px-10 py-10 shadow-[0_30px_80px_rgba(15,23,42,0.18)]">

@@ -12,26 +12,41 @@ export async function POST(request: Request) {
   const qText = url.searchParams.get('qText') || 'Unknown Question';
   
   const formData = await request.formData();
+  
+  const digits = formData.get('Digits') as string | null;
+
+
+  if (digits === '0') {
+    console.log(`User pressed 0. Repeating Q${parseInt(nextIdxStr || '0') + 1}`);
+    const twiml = new VoiceResponse();
+    
+   
+    twiml.redirect(`/api/twilio/question?submissionId=${submissionId}&next=${nextIdxStr}&repeat=true`);
+    
+    return new NextResponse(twiml.toString(), {
+      headers: { 'Content-Type': 'text/xml' },
+    });
+  }
+
+  
   const transcriptionText = formData.get('TranscriptionText') as string;
   const recordingUrl = formData.get('RecordingUrl') as string;
   const callSid = formData.get('CallSid') as string; 
 
+ 
   if (transcriptionText && submissionId) {
     console.log(`Received Answer for Q${parseInt(nextIdxStr || '0') + 1}:`, transcriptionText);
     
     try {
       const supabase = await createClient();
 
-    
       const { data: subData } = await supabase
         .from('Submissions')
         .select('student_id')
         .eq('id', submissionId)
         .single();
 
-      
       const aiResult = await analyzeTranscript(transcriptionText); 
-      
       
       await supabase.from('Results').insert({
         submission_id: parseInt(submissionId, 10),
@@ -48,15 +63,17 @@ export async function POST(request: Request) {
     }
   }
 
+  
   if (transcriptionText) {
       return NextResponse.json({ success: true });
   }
+
 
   const twiml = new VoiceResponse();
   const nextIdx = parseInt(nextIdxStr || '0', 10);
   const nextQuestionIdx = nextIdx + 1; 
 
-  twiml.say("Response recorded.");
+  twiml.say({ voice: 'Polly.Joanna' }, "Response recorded.");
   twiml.redirect(`/api/twilio/question?submissionId=${submissionId}&next=${nextQuestionIdx}`);
 
   return new NextResponse(twiml.toString(), {
