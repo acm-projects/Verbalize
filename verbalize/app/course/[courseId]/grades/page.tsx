@@ -23,7 +23,7 @@ function getStatusStyle(status: "Completed" | "Pending") {
   return "bg-yellow-100 text-yellow-700";
 }
 
-export default function GradesPage({ params, }: { params: Promise<{ courseId: string }>;}) {
+export default function GradesPage({ params, }: { params: Promise<{ courseId: string }>; }) {
   const [openModal, setOpenModal] = useState(false);
   const [students, setStudents] = useState<StudentGrade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +37,7 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
     async function fetchStudents() {
       if (!courseId) return;
 
+      // 1. Fetch only students enrolled in THIS course
       const { data: courseStudents, error } = await supabase
         .from("Course_Students")
         .select(`
@@ -60,41 +61,44 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
         courseStudents.map(async (record: any) => {
           const s = record.Students;
 
+          // 1. Fetch submissions but ensure we only get Results for this specific course join
           const { data: submissions } = await supabase
             .from("Submissions")
             .select(`
-              id,
-              assignment_id,
-              Results ( confidence_score )
-            `)
-            .eq("student_id", s.id);
+                  id,
+                  assignment_id,
+                  Assignments!inner ( assignment_name, course_id ),
+                  Results ( id, confidence_score ) 
+                `)
+            .eq("student_id", s.id)
+            .eq("Assignments.course_id", courseId);
 
           let total = 0;
           let count = 0;
-
           const details: AssignmentDetail[] = [];
 
           submissions?.forEach((sub: any) => {
+            //Only count as completed if the Results array for THIS submission is not empty
             const results = sub.Results || [];
+            const hasResultsForThisAssignment = results.length > 0;
 
             let grade = 0;
 
-            results.forEach((r: any) => {
-              grade += r.confidence_score || 0;
-            });
-
-            if (results.length > 0) {
-              grade /= results.length;
+            if (hasResultsForThisAssignment) {
+              const sum = results.reduce((acc: number, curr: any) => acc + (curr.confidence_score || 0), 0);
+              grade = sum / results.length;
               total += grade;
               count++;
             }
 
             details.push({
-              name: `Assignment ${sub.assignment_id}`,
-              status: results.length > 0 ? "Completed" : "Pending",
+              name: sub.Assignments?.assignment_name || `Assignment ${sub.assignment_id}`,
+              //The key change: Status is now scoped strictly to this submission's results
+              status: hasResultsForThisAssignment ? "Completed" : "Pending",
               score: Math.round(grade || 0),
             });
           });
+
 
           const avgGrade = count > 0 ? total / count : 0;
 
@@ -114,6 +118,7 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
 
     fetchStudents();
   }, [courseId]);
+
 
   const toggleRow = (index: number) => {
     setOpenRows((prev) =>
@@ -165,7 +170,7 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
                   <div key={index}>
                     {/* STUDENT CARD */}
                     <div className="flex items-center gap-4 rounded-xl border border-blue-200 bg-[#fbfbfc] px-4 py-4 shadow-[0_4px_16px_rgba(15,23,42,0.04)]">
-                      
+
                       {/* expand */}
                       <button
                         onClick={() => toggleRow(index)}
