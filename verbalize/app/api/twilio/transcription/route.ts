@@ -3,56 +3,60 @@ import { createClient } from "@/lib/supabase/server"
 import { analyzeTranscript } from "@/lib/analysis";
 
 export async function POST(request: Request) {
+  console.log(" Transcription webhook received");
+  const supabase = await createClient();
 
-  const supabase = await createClient()
   
   try {
-  // 1. Parse the asynchronous form data sent by Twilio
-  const formData = await request.formData();
-  
-  // 2. Extract core metadata for the student's submission
-  const transcriptionText = formData.get('TranscriptionText'); // The converted text
-  const recordingUrl = formData.get('RecordingUrl');           // Link to the audio file
-  const callSid = formData.get('CallSid');                     // Unique ID for this specific call
+   
+    const url = new URL(request.url);
+    const submissionId = url.searchParams.get('submissionId');
+    const questionId = url.searchParams.get('questionId');
 
-  // 3. Log data to the terminal (This is where we connect to Supabase later)
-  console.log('--- New Transcript Received ---');
-  console.log(`[Call SID]: ${callSid}`);
-  console.log(`[Audio URL]: ${recordingUrl}`);
-  console.log(`[Student Response]: ${transcriptionText}`);
-  console.log('-------------------------------');
+    const formData = await request.formData();
+    const transcriptionText = formData.get('TranscriptionText') as string;
+    const recordingUrl = formData.get('RecordingUrl') as string;
+    const callSid = formData.get('CallSid') as string;
 
-  const aiData = await analyzeTranscript(transcriptionText as string);
-
-  if (transcriptionText && callSid) {
-      const { error } = await supabase
-        .from('Results') 
-        .insert([
-          { 
-            call_id: callSid,
-            recording_url: recordingUrl,
-            student_response: transcriptionText,
-            summary: aiData.summary,
-            confidence_score: aiData.confidence,
-            created_at: new Date().toISOString()
-          },
-        ]);
-
-      if (error) {
-        console.error('Supabase Insert Error:', error);
-        // We still return 200 to Twilio so they stop retrying, 
-        // but log the error internally.
-      } else {
-        console.log('Successfully saved to database.');
-      }
+    if (!transcriptionText || !submissionId) {
+      return new NextResponse('Missing Data', { status: 200 });
     }
 
-  // 5. Return a 200 OK to Twilio
-  // NOTE: This endpoint does NOT need to return TwiML/XML because it's an 
-  // asynchronous background process that doesn't affect the live call audio.
-  return new NextResponse('OK', { status: 200 });
-  } catch (error) {
-    console.error('Error handling Twilio webhook:', error);
+   const { data: qData } = await supabase
+      .from('Assignment_Questions')
+      .select('question_text')
+      .eq('id', questionId)
+      .single();
+
+    const { data: subData } = await supabase
+      .from('Submissions')
+      .select('student_id')
+      .eq('id', submissionId)
+      .single();
+
+    
+    const aiData = await analyzeTranscript(transcriptionText,qData?.question_text || "");
+
+   
+    const { error } = await supabase.from('Results').insert([{ 
+      submission_id: submissionId,
+      student_id: subData?.student_id, 
+      recording_url: recordingUrl,
+      call_id: callSid,
+      transcript: transcriptionText,
+      confidence_score: aiData.confidence, 
+      summary: aiData.summary
+    }]);
+    if (error) console.error('DB Insert Error:', error.message);
+    else {
+  console.log("SUCCESS: Saved response to DB");
+}
+
+    return new NextResponse('OK', { status: 200 });
+
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Final Hook Error:', err.message);
     return new NextResponse('Internal Error', { status: 500 });
   }
 }

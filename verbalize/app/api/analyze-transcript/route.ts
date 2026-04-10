@@ -4,11 +4,17 @@ import { analyzeTranscript } from '@/lib/analysis';
 
 export async function POST(request: Request) {
   try {
-    const { transcriptionText, callSid } = await request.json();
+    const { transcriptionText, callSid, questionId } = await request.json();
     const supabase = await createClient();
 
+    const { data: qData } = await supabase
+      .from('Assignment_Questions')
+      .select('question_text')
+      .eq('id', questionId)
+      .single();
+
     
-    const analysis = await analyzeTranscript(transcriptionText);
+    const analysis = await analyzeTranscript(transcriptionText,qData?.question_text);
 
     // 2. Update Supabase
     const { error } = await supabase
@@ -17,7 +23,7 @@ export async function POST(request: Request) {
         summary: analysis.summary, 
         confidence_score: analysis.confidence // This matches the key in your schema
       })
-      .eq('call_sid', callSid);
+      .eq('call_id', callSid);
 
     if (error) throw error;
 
