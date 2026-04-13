@@ -1,75 +1,115 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, use } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
-  LineChart, Line, Dot
+  LineChart, Line
 } from 'recharts';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { createClient } from "@/lib/supabase/client";
 
-// Mock data for Bar Chart (Individual Assignments)
-const ASSIGNMENTS_DETAILS = {
-  "Assignment 1": {
-    avg: 68.5,
-    data: [
-      { range: "0-20", students: 5 }, { range: "20-40", students: 8 },
-      { range: "40-60", students: 15 }, { range: "60-80", students: 25 },
-      { range: "80-100", students: 12 },
-    ]
-  },
-  "Assignment 2": {
-    avg: 81.2,
-    data: [
-      { range: "0-20", students: 2 }, { range: "20-40", students: 4 },
-      { range: "40-60", students: 10 }, { range: "60-80", students: 30 },
-      { range: "80-100", students: 20 },
-    ]
-  },
-  "Assignment 3": {
-    avg: 72.4,
-    data: [
-      { range: "0-20", students: 4 }, { range: "20-40", students: 10 },
-      { range: "40-60", students: 18 }, { range: "60-80", students: 22 },
-      { range: "80-100", students: 15 },
-    ]
-  }
-};
+export default function GraphicDashboard({ params }: { params: Promise<{ courseId: string }> }) {
+  const supabase = createClient();
+  const resolvedParams = use(params);
+  const courseId = Number(resolvedParams.courseId);
 
-// Mock data for Line Chart (The Trend)
-const FULL_TREND_DATA = [
-  { name: "Asgn 1", avg: 68.5 },
-  { name: "Asgn 2", avg: 81.2 },
-  { name: "Asgn 3", avg: 72.4 },
-  { name: "Asgn 4", avg: 78.0 },
-  { name: "Asgn 5", avg: 85.3 },
-];
-
-export default function GraphicDashboard() {
-  const [selectedAsgn, setSelectedAsgn] = useState("Assignment 1");
+  const [selectedAsgn, setSelectedAsgn] = useState<string>("");
   const [trendRange, setTrendRange] = useState("All");
+  const [loading, setLoading] = useState(true);
+  
+  const [assignmentsDetails, setAssignmentsDetails] = useState<any>({});
+  const [fullTrendData, setFullTrendData] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchAnalyticsData() {
+      if (!courseId) return;
+      setLoading(true);
+
+      const { data: assignments } = await supabase
+        .from("Assignments")
+        .select("id, assignment_name")
+        .eq("course_id", courseId);
+
+      const { data: submissions, error } = await supabase
+        .from("Submissions")
+        .select(`
+          assignment_id,
+          Results ( confidence_score )
+        `)
+        .in("assignment_id", assignments?.map(a => a.id) || []);
+
+      if (error || !submissions || !assignments) {
+        setLoading(false);
+        return;
+      }
+
+      const details: any = {};
+      const trend: any[] = [];
+
+      assignments.forEach((asgn) => {
+        const asgnSubmissions = submissions.filter(s => s.assignment_id === asgn.id);
+        
+        const scores = asgnSubmissions.flatMap(s => 
+          (s.Results as any[] || []).map(r => r.confidence_score || 0)
+        );
+
+        const distribution = [
+          { range: "0-20", students: scores.filter(s => s <= 20).length },
+          { range: "20-40", students: scores.filter(s => s > 20 && s <= 40).length },
+          { range: "40-60", students: scores.filter(s => s > 40 && s <= 60).length },
+          { range: "60-80", students: scores.filter(s => s > 60 && s <= 80).length },
+          { range: "80-100", students: scores.filter(s => s > 80).length },
+        ];
+
+        const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+
+        details[asgn.assignment_name] = {
+          avg,
+          data: distribution
+        };
+
+        trend.push({ name: asgn.assignment_name, avg });
+      });
+
+      setAssignmentsDetails(details);
+      setFullTrendData(trend);
+      
+      if (assignments.length > 0 && !selectedAsgn) {
+        setSelectedAsgn(assignments[0].assignment_name);
+      }
+      
+      setLoading(false);
+    }
+
+    fetchAnalyticsData();
+  }, [courseId]);
 
   const currentSet = useMemo(() => 
-    ASSIGNMENTS_DETAILS[selectedAsgn as keyof typeof ASSIGNMENTS_DETAILS], 
-    [selectedAsgn]
+    assignmentsDetails[selectedAsgn] || { avg: 0, data: [] }, 
+    [selectedAsgn, assignmentsDetails]
   );
 
   const trendData = useMemo(() => {
-    if (trendRange === "All") return FULL_TREND_DATA;
-    return FULL_TREND_DATA.slice(-parseInt(trendRange));
-  }, [trendRange]);
+    if (trendRange === "All") return fullTrendData;
+    return fullTrendData.slice(-parseInt(trendRange));
+  }, [trendRange, fullTrendData]);
+
+  if (loading) return (
+    <div className="flex justify-center items-center py-20">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#407EA7]" />
+    </div>
+  );
 
   return (
     <div className="h-full space-y-6">
-      {/* 1. Header Section */}
       <div className="flex justify-between items-center px-2 py-4 border-b border-gray-100">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Score Analytics</h1>
-          <p className="text-sm text-slate-500">Course ID: 11</p>
+          <p className="text-sm text-slate-500">Course ID: {courseId}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* TOP LEFT: Bar Chart for Current Assignment */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -82,7 +122,7 @@ export default function GraphicDashboard() {
               onChange={(e) => setSelectedAsgn(e.target.value)}
               className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 outline-none focus:ring-2 ring-[#407EA7]/20 cursor-pointer"
             >
-              {Object.keys(ASSIGNMENTS_DETAILS).map(key => <option key={key} value={key}>{key}</option>)}
+              {Object.keys(assignmentsDetails).map(key => <option key={key} value={key}>{key}</option>)}
             </select>
           </div>
           
@@ -94,7 +134,7 @@ export default function GraphicDashboard() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
                 <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} />
                 <Bar dataKey="students" isAnimationActive={true} animationDuration={1000} radius={[4, 4, 0, 0]} barSize={40}>
-                  {currentSet.data.map((entry, index) => (
+                  {currentSet.data.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={entry.range === "80-100" ? "#407EA7" : "#407EA740"} />
                   ))}
                 </Bar>
@@ -103,7 +143,6 @@ export default function GraphicDashboard() {
           </div>
         </motion.div>
 
-        {/* TOP RIGHT: Avg & Metrics */}
         <div className="space-y-4">
           <motion.div 
             key={selectedAsgn}
@@ -125,12 +164,13 @@ export default function GraphicDashboard() {
 
           <div className="bg-white border border-slate-100 p-6 rounded-xl shadow-sm">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Integrity Alert</p>
-            <h4 className="text-2xl font-black text-red-400 mt-1">{currentSet.data[0].students + currentSet.data[1].students}</h4>
+            <h4 className="text-2xl font-black text-red-400 mt-1">
+              {(currentSet.data[0]?.students || 0) + (currentSet.data[1]?.students || 0)}
+            </h4>
             <p className="text-xs text-slate-400 mt-1 italic">Students in low-confidence range</p>
           </div>
         </div>
 
-        {/* BOTTOM: Line Chart for Trends */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -138,9 +178,7 @@ export default function GraphicDashboard() {
           className="lg:col-span-3 bg-white p-6 rounded-xl border border-slate-100 shadow-sm"
         >
           <div className="flex justify-between items-center mb-6">
-            <div>
-              <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Average understanding over time</h3>
-            </div>
+            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Average understanding over time</h3>
             <div className="flex gap-2">
               {["3", "5", "All"].map(range => (
                 <button 
@@ -167,7 +205,6 @@ export default function GraphicDashboard() {
                   stroke="#407EA7" 
                   strokeWidth={3} 
                   dot={{ r: 4, fill: "#407EA7", strokeWidth: 2, stroke: "#fff" }}
-                  activeDot={{ r: 6, strokeWidth: 0 }}
                   animationDuration={1500}
                 />
               </LineChart>
