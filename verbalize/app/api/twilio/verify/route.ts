@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   if (subError || !submission) {
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
     <Response>
-        <Say voice="Polly.Joanna">Invalid PIN code. Access denied.</Say>
+        <Say voice="Polly.Stephen-Neural">Invalid PIN code. Access denied.</Say>
         <Hangup/>
     </Response>`;
     return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } });
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   if (qError || !allQuestions || allQuestions.length === 0) {
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
     <Response>
-        <Say voice="Polly.Joanna">No questions available for this assignment.</Say>
+        <Say voice="Polly.Stephen-Neural">No questions available for this assignment.</Say>
         <Hangup/>
     </Response>`;
     return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } });
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   // 4. Redirect to the question route, passing the selected IDs in the URL
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
   <Response>
-      <Say voice="Polly.Joanna">PIN verified. Let's begin your assessment.</Say>
+      <Say voice="Polly.Stephen-Neural">PIN verified. Let's begin your assessment.</Say>
       <Redirect>/api/twilio/question?next=0&amp;qIds=${selectedQuestionIds}&amp;submissionId=${submission.id}</Redirect>
   </Response>`;
 
