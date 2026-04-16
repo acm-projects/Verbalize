@@ -26,37 +26,34 @@ export async function POST(req: Request) {
       throw new Error("No submissions found for this assignment");
     }
 
-    let sentCount = 0;
+let sentCount = 0;
+    const emailsToSend = []; 
 
     for (const sub of submissions) {
       if (!sub.student_id) continue;
 
-     
       const { data: studentData, error: studentError } = await supabase
         .from("Students")
         .select("email, first_name, last_name")
         .eq("id", sub.student_id)
         .single(); 
 
-      
       if (studentError || !studentData || !studentData.email) {
         console.warn(`Skipping student ${sub.student_id} due to missing email.`);
         continue;
       }
 
-      
       const randomPin = Math.floor(1000 + Math.random() * 9000);
 
-     
       await supabase
         .from("Submissions")
         .update({ pin_id: randomPin })
         .eq('id', sub.id);
 
       
-      const msg = {
+      emailsToSend.push({
         to: studentData.email, 
-        from: process.env.SENDGRID_SENDER_EMAIL || 'test@example.com', 
+        from: process.env.SENDGRID_SENDER_EMAIL || 'test@example.com',
         subject: `Your Oral Assessment PIN Code`,
         html: `
           <div style="font-family: sans-serif; padding: 20px;">
@@ -69,20 +66,23 @@ export async function POST(req: Request) {
             <p>Good luck!</p>
           </div>
         `,
-      };
+      });
       
-      
-      await sgMail.send(msg);
       sentCount++;
+    }
+
+    
+    if (emailsToSend.length > 0) {
+      await sgMail.send(emailsToSend);
     }
 
     return NextResponse.json({ 
       success: true, 
       message: `Successfully sent emails to ${sentCount} students.` 
     });
-
-  } catch (error: any) {
-    console.error("Worker Error:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+} catch (error: unknown) {
+    const err = error as Error; 
+    console.error("API Error:", err.message);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

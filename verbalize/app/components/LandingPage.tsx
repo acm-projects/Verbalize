@@ -52,7 +52,7 @@ export default function LandingPage() {
 
                 <div className="absolute inset-0 bg-gradient-to-b from-[#F8FAFC]/20 via-[#F8FAFC]/20 to-[#F8FAFC]" />
 
-                <div className="p-5 flex flex-row justify-center px-20 z-10 gap-50">
+                <div className="p-5 flex flex-row justify-between px-20 z-10 gap-50">
                     <motion.div 
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}

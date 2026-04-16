@@ -1,61 +1,112 @@
 import { NextResponse } from 'next/server';
+import twilio from 'twilio';
 import { createClient } from "@/lib/supabase/server";
+
+const VoiceResponse = twilio.twiml.VoiceResponse;
 
 export async function POST(request: Request) {
   const url = new URL(request.url);
-  const currentIndex = parseInt(url.searchParams.get('next') || '0');
   const submissionId = url.searchParams.get('submissionId');
-  const qIdsParam = url.searchParams.get('qIds'); 
+  const nextIdx = parseInt(url.searchParams.get('next') || '0', 10);
+  const isRepeat = url.searchParams.get('repeat') === 'true';
+  
+  
+  const qIdsParam = url.searchParams.get('qIds') || "";
+  const qIdArray = qIdsParam.split(',');
+  const targetId = qIdArray[nextIdx] || "unknown";
 
-  if (!submissionId || !qIdsParam) {
-    return new NextResponse('Missing required parameters', { status: 400 });
+  const twiml = new VoiceResponse();
+
+  if (!submissionId) {
+    twiml.say({ voice: 'Polly.Joanna' as any }, 'Error: missing submission data.');
+    return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
   }
 
-  // Parse the comma-separated IDs back into an array
-  const questionIds = qIdsParam.split(',');
-
-  // 1. Check if the assessment is complete
-  if (currentIndex >= questionIds.length) {
-    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-    <Response>
-        <Say voice="Polly.Joanna">You have completed the assessment. Thank you and goodbye.</Say>
-        <Hangup/>
-    </Response>`;
-    return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } });
+  if (nextIdx >= 3) {
+    twiml.say({ voice: 'Polly.Joanna' as any }, 'You have completed all questions. Thank you for your time.');
+    twiml.pause({ length: 3 }); 
+    twiml.hangup();
+    return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
   }
 
-  const currentQuestionId = questionIds[currentIndex];
   const supabase = await createClient();
-
-  // 2. Fetch the specific question text from the database
-  const { data: questionData, error } = await supabase
-    .from('Assignment_Questions')
-    .select('id, question_text')
-    .eq('id', currentQuestionId)
+  
+  const { data: submission } = await supabase
+    .from('Submissions')
+    .select('student_id, assignment_id')
+    .eq('id', submissionId)
     .single();
 
-  if (error || !questionData) {
-    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-    <Response><Say voice="Polly.Joanna">Error loading question.</Say><Hangup/></Response>`;
-    return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } });
+  if (!submission) {
+    twiml.say({ voice: 'Polly.Joanna' as any }, 'Error: submission record not found.');
+    return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
   }
 
-  const nextIndex = currentIndex + 1;
-  
-  // 3. Generate TwiML and pass state forward
-  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-  <Response>
-      <Say voice="Polly.Joanna">Question ${nextIndex}: ${questionData.question_text}</Say>
-      <Record 
-          action="/api/twilio/question?next=${nextIndex}&amp;qIds=${qIdsParam}&amp;submissionId=${submissionId}" 
-          timeout="5" 
-          transcribe="true" 
-          transcribeCallback="/api/twilio/transcription?submissionId=${submissionId}&amp;questionId=${questionData.id}" 
-          playBeep="true" 
-      />
-  </Response>`;
+  let questionToAsk = "";
+  let source = ""; // CHANGE: Variable to track which table we are using
 
-  return new NextResponse(twiml, { 
-    headers: { 'Content-Type': 'text/xml', 'Cache-Control': 'no-store' } 
+  if (nextIdx === 0 || nextIdx === 1) {
+    source = "student_specific"; // CHANGE: Mark as specific source
+    const { data: specificData } = await supabase
+      .from('StudentSpecificQuestions')
+      .select('id, questions')
+      .eq('assignment_id', submission.assignment_id)
+      .eq('student_id', submission.student_id)
+      .single();
+
+    if (specificData && Array.isArray(specificData.questions) && specificData.questions.length > nextIdx) {
+      questionToAsk = specificData.questions[nextIdx];
+    } else {
+      questionToAsk = "Please provide an overview of your logic in the submitted code.";
+    }
+  } else if (nextIdx === 2) {
+    source = "assignment_general"; 
+    const { data: generalData } = await supabase
+      .from('Assignment_Questions')
+      .select('id, question_text')
+      
+      .eq('id', targetId) 
+      .single(); 
+
+    if (generalData) {
+      questionToAsk = generalData.question_text;
+    } else {
+      questionToAsk = "Please explain the fundamental concepts covered in this assignment.";
+    }
+  }
+
+  
+  const transcriptionUrl = `/api/twilio/transcription?submissionId=${submissionId}&next=${nextIdx}&questionId=${targetId}&source=${source}&qIds=${qIdsParam}`;
+
+  const gather = twiml.gather({
+    action: transcriptionUrl,
+    numDigits: 1,
+    timeout: 2, 
+  });
+
+  if (nextIdx === 0 && !isRepeat) {
+    const introSay = gather.say({ voice: 'Polly.Joanna' as any });
+    introSay.prosody(
+      { rate: '90%' }, 
+      "Before we begin, please note: You will hear a beep two seconds after each question to start your recording. Before the beep, you can press 0 to hear the current question again."
+    );
+  }
+
+  const questionSay = gather.say({ voice: 'Polly.Joanna' as any });
+  questionSay.prosody(
+    { rate: '80%' }, 
+    `Question ${nextIdx + 1}: ${questionToAsk}`
+  );
+
+  twiml.record({
+    action: transcriptionUrl,
+    transcribe: true,
+    transcribeCallback: transcriptionUrl,
+    playBeep: true, 
+    trim: "do-not-trim"
+  });
+
+  return new NextResponse(twiml.toString(), {
+    headers: { 'Content-Type': 'text/xml' },
   });
 }

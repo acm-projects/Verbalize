@@ -16,7 +16,7 @@ export async function analyzeTranscript(text: string,questionText: string) {
         1. RELEVANCY: If the student's answer is random or doesn't address the question, score MUST be 0.
         2. NO PITY POINTS: Do not give a 30-50 score for "effort." 
         3. BULLSHIT DETECTOR: If the student uses buzzwords but doesn't explain the concept, score below 15.
-        4. FORMAT: The confidence score MUST be a WHOLE NUMBER (Integer) between 0 and 100.
+        4. FORMAT: The grade MUST be a WHOLE NUMBER (Integer) between 0 and 100.
         
         Return ONLY valid JSON.`
       },
@@ -31,9 +31,9 @@ export async function analyzeTranscript(text: string,questionText: string) {
           type: "object",
           properties: {
             summary: { type: "string" },
-            confidence: { type: "integer" } 
+            grade: { type: "integer" } 
           },
-          required: ["summary", "confidence"],
+          required: ["summary", "grade"],
           additionalProperties: false
         }
       }

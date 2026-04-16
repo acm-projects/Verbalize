@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     const result = JSON.parse(response.choices[0].message.content || "{}");
     
     
-    const questionsToInsert = result.questions.map((q: any) => ({
+    const questionsToInsert = result.questions.map((q: { text: string }) => ({
       assignment_id: assignmentId,
       question_text: q.text 
     }));
@@ -67,8 +67,9 @@ export async function POST(req: Request) {
     
     return NextResponse.json({ success: true });
 
-  } catch (error: any) {
-    console.error("API Error:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+    } catch (error: unknown) {
+        const err = error as Error; 
+        console.error("API Error:", err.message);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+      }
 }
