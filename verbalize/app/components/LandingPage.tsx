@@ -5,6 +5,7 @@ import { PhoneIcon, ShieldCheckIcon, CpuChipIcon, CommandLineIcon } from '@heroi
 import Link from 'next/link';
 import { motion } from 'framer-motion'; 
 import Typewriter from 'typewriter-effect';
+import Logo from "../assets/Verbalize-Picsart-BackgroundRemover.jpg";
 
 const cutiveMono = Cutive_Mono({
     weight: '400',
@@ -30,9 +31,9 @@ export default function LandingPage() {
     return (
         <div className="overflow-hidden selection:bg-[#407EA7] selection:text-white">
             {/* Logo - Name - Login */}
-            <nav className="fixed top-0 w-full h-[50px] z-[100] flex justify-between items-center px-10 md:px-20 bg-[#F8FAFC]/90 backdrop-blur-md border-b border-[#407EA7]/10">
-                <div className="flex items-center gap-3">
-                    <div className="size-8 bg-gradient-to-br from-[#407EA7] to-[#2D5A78] rounded-lg shadow-lg shadow-[#407EA7]/20 flex items-center justify-center text-white" />
+            <nav className="fixed top-0 w-full h-[50px] z-[100] flex justify-between items-center px-8 md:px-20 bg-[#F8FAFC]/90 backdrop-blur-md border-b border-[#407EA7]/10">
+                <div className="flex items-center gap-1 mb-1">
+                    <img src={Logo.src} alt="Logo" className="size-13 rounded-full" />
                     <span className="text-slate-900 font-black text-xl tracking-tight">Verbalize</span>
                 </div>
                 <Link href="/login">

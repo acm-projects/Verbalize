@@ -22,39 +22,52 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
   const supabase = createClient();
 
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const [selectedSubmissions, setSelectedSubmissions] = useState<any[]>([]);
+  const [currentSubIndex, setCurrentSubIndex] = useState(0);
+
   const [selectedTranscript, setSelectedTranscript] = useState<any[]>([]);
   const [modalType, setModalType] = useState<"code" | "transcript" | null>(null);
 
   const handleViewCode = async (studentId?: string) => {
-  if (!studentId) return;
+    if (!studentId) return;
 
-  const { data, error } = await supabase
-    .from("Submissions")
-    .select("code_text")
-    .eq("student_id", studentId)
-    .order("submitted_at", { ascending: false })
-    .limit(1);
+    const { data, error } = await supabase
+      .from("Submissions")
+      .select(`
+      id,
+      code_text,
+      submitted_at,
+      Assignments!inner (assignment_name, course_id)
+    `)
+      .eq("student_id", studentId)
+      .eq("Assignments.course_id", courseId)
+      .order("submitted_at", { ascending: false });
 
-  if (error) {
-    console.log(error);
-    return;
-  }
+    console.log("Submissions found:", data);
 
-  setSelectedCode(data?.[0]?.code_text || "No code found");
-  setModalType("code");
-};
+    if (error || !data?.length) {
+      setSelectedCode("No code found for this course.");
+      setSelectedSubmissions([]);
+    } else {
+      setSelectedSubmissions(data);
+      setCurrentSubIndex(0);
+      setSelectedCode(data[0].code_text);
+    }
+    setModalType("code");
+  };
+
 
   const resolvedParams = use(params);
   const courseId = resolvedParams.courseId;
 
   useEffect(() => {
     async function fetchStudents() {
-  
+
       if (!courseId) return;
 
-      
+
       const { data, error } = await supabase
-        .from("Course_Students") 
+        .from("Course_Students")
         .select(`
           *,
           Students (
@@ -68,66 +81,68 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
 
       if (error) {
         console.error("Error fetching students:", error);
-        
+
         setStudents(getMockStudents());
       } else if (data && data.length > 0) {
-     
+
         const mappedStudents = data.map((record: any) => {
-        // Access the nested student object
-              const s = record.Students; 
-              
-              return {
-                id: s?.id || record.id,
-                lastName: s?.last_name || "Unknown",
-                firstName: s?.first_name || "Unknown",
-                netId: s?.netID || "N/A",
-                grade: record.grade || "A" // Grade usually lives on the join table
-              };
+          // Access the nested student object
+          const s = record.Students;
+
+          return {
+            id: s?.id || record.id,
+            lastName: s?.last_name || "Unknown",
+            firstName: s?.first_name || "Unknown",
+            netId: s?.netID || "N/A",
+            grade: record.grade || "A" // Grade usually lives on the join table
+          };
         });
         setStudents(mappedStudents);
       } else {
-       
+
         setStudents([]);
       }
       setLoading(false);
     }
 
     fetchStudents();
-  }, [courseId]); 
+  }, [courseId]);
 
   const handleViewTranscript = async (studentId?: string) => {
-  if (!studentId) return;
+    if (!studentId) return;
 
-  // 1. Get latest submission for this student
-  const { data: submissionData, error: subError } = await supabase
-    .from("Submissions")
-    .select("id")
-    .eq("student_id", studentId)
-    .order("submitted_at", { ascending: false })
-    .limit(1);
+    // 1. Get ALL submissions for this student in THIS course
+    const { data: submissions, error } = await supabase
+      .from("Submissions")
+      .select(`
+      id,
+      Assignments!inner (assignment_name, course_id),
+      Results (
+        transcript,
+        summary,
+        call_id
+      )
+    `)
+      .eq("student_id", studentId)
+      .eq("Assignments.course_id", courseId)
+      .order("submitted_at", { ascending: false });
 
-  if (subError || !submissionData?.length) {
-    console.error("Submission fetch error:", subError);
-    return;
-  }
+    if (error || !submissions || submissions.length === 0) {
+      setSelectedSubmissions([]);
+      setSelectedTranscript([]);
+      setModalType("transcript");
+      return;
+    }
 
-  const submissionId = submissionData[0].id;
+    // 2. Store all submissions so we can toggle through them
+    setSelectedSubmissions(submissions);
+    setCurrentSubIndex(0);
 
-  // 2. Get transcript entries (3 rows)
-  const { data, error } = await supabase
-    .from("Results")
-    .select("transcript, summary, call_id")
-    .eq("submission_id", submissionId)
-    .order("call_id", { ascending: true });
+    // 3. Set the transcript for the first (latest) assignment
+    setSelectedTranscript(submissions[0].Results || []);
+    setModalType("transcript");
+  };
 
-  if (error) {
-    console.error("Transcript fetch error:", error);
-    return;
-  }
-
-  setSelectedTranscript(data || []);
-  setModalType("transcript");
-};
 
   const badgeStyle = (grade: string) => {
     if (grade === "A") return "bg-green-100 text-green-700";
@@ -138,13 +153,13 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
 
   return (
     <>
-      
+
       <div className="h-full">
-        
+
         <div className="flex justify-between items-center px-2 py-4 border-b border-gray-100 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Students</h1>
-           
+
             <p className="text-sm text-slate-500">Course ID: {courseId}</p>
           </div>
           <button
@@ -189,10 +204,10 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
 
                     <div>
                       <span
-                          onClick={() => handleViewCode(student.id)}
-                          className="font-semibold text-[#4f87b0] cursor-pointer hover:text-blue-700 underline"
-                        >
-                          View Code
+                        onClick={() => handleViewCode(student.id)}
+                        className="font-semibold text-[#4f87b0] cursor-pointer hover:text-blue-700 underline"
+                      >
+                        View Code
                       </span>
                     </div>
 
@@ -225,51 +240,131 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
       <CreateModal
         open={openModal}
         mode="assignment"
-       
+
         courseId={courseId}
         onClose={() => setOpenModal(false)}
       />
 
       {modalType && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-white rounded-xl p-6 w-[700px] max-h-[80vh] overflow-y-auto shadow-xl">
-      
-      {/* CLOSE */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-bold">
-          {modalType === "code" ? "Student Code" : "AI Transcript"}
-        </h2>
-        <button onClick={() => setModalType(null)}>✕</button>
-      </div>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-[700px] max-h-[80vh] overflow-y-auto shadow-xl">
 
-      {/* CODE VIEW */}
-      {modalType === "code" && (
-        <pre className="bg-gray-100 p-4 rounded text-sm overflow-x-auto">
-          {selectedCode}
-        </pre>
-      )}
-
-      {/* TRANSCRIPT VIEW */}
-      {modalType === "transcript" && (
-        <div className="space-y-4">
-          {selectedTranscript.map((entry, i) => (
-            <div key={i} className="border p-3 rounded">
-              <p className="font-bold text-sm mb-1">
-                Question {i + 1}
-              </p>
-              <p className="text-sm text-gray-700">
-                {entry.student_response}
-              </p>
-              <p className="text-xs text-gray-500 mt-2">
-                Summary: {entry.summary}
-              </p>
+            {/* CLOSE */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold">
+                {modalType === "code" ? "Student Code" : "AI Transcript"}
+              </h2>
+              <button onClick={() => setModalType(null)}>✕</button>
             </div>
-          ))}
+
+            {modalType === "code" && (
+              <div>
+                {selectedSubmissions.length > 1 && (
+                  <div className="flex justify-between items-center mb-4 bg-slate-50 p-2 rounded-lg border">
+                    <button
+                      disabled={currentSubIndex === 0}
+                      onClick={() => {
+                        const newIndex = currentSubIndex - 1;
+                        setCurrentSubIndex(newIndex);
+                        setSelectedCode(selectedSubmissions[newIndex].code_text);
+                      }}
+                      className="px-3 py-1 text-sm bg-white border rounded shadow-sm disabled:opacity-30"
+                    >
+                      ← Previous Assignment
+                    </button>
+
+                    <span className="text-sm font-medium">
+                      {selectedSubmissions[currentSubIndex].Assignments?.title}
+                      <span className="text-slate-400 ml-2">({currentSubIndex + 1} of {selectedSubmissions.length})</span>
+                    </span>
+
+                    <button
+                      disabled={currentSubIndex === selectedSubmissions.length - 1}
+                      onClick={() => {
+                        const newIndex = currentSubIndex + 1;
+                        setCurrentSubIndex(newIndex);
+                        setSelectedCode(selectedSubmissions[newIndex].code_text);
+                      }}
+                      className="px-3 py-1 text-sm bg-white border rounded shadow-sm disabled:opacity-30"
+                    >
+                      Next Assignment →
+                    </button>
+                  </div>
+                )}
+
+                <pre className="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto min-h-[300px]">
+                  {selectedCode || "No code content available."}
+                </pre>
+              </div>
+            )}
+
+
+            {modalType === "transcript" && (
+              <div className="space-y-4">
+                {/* Navigation Header if multiple assignments exist */}
+                {selectedSubmissions.length > 0 && (
+                  <div className="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4">
+                    <button
+                      disabled={currentSubIndex === 0}
+                      onClick={() => {
+                        const nextIdx = currentSubIndex - 1;
+                        setCurrentSubIndex(nextIdx);
+                        setSelectedTranscript(selectedSubmissions[nextIdx].Results || []);
+                      }}
+                      className="text-xs font-bold text-blue-600 disabled:text-gray-300"
+                    >
+                      ← PREV
+                    </button>
+
+                    <div className="text-center">
+                      <p className="text-xs font-bold text-slate-800 uppercase">
+                        {selectedSubmissions[currentSubIndex].Assignments?.title}
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        Assignment {currentSubIndex + 1} of {selectedSubmissions.length}
+                      </p>
+                    </div>
+
+                    <button
+                      disabled={currentSubIndex === selectedSubmissions.length - 1}
+                      onClick={() => {
+                        const nextIdx = currentSubIndex + 1;
+                        setCurrentSubIndex(nextIdx);
+                        setSelectedTranscript(selectedSubmissions[nextIdx].Results || []);
+                      }}
+                      className="text-xs font-bold text-blue-600 disabled:text-gray-300"
+                    >
+                      NEXT →
+                    </button>
+                  </div>
+                )}
+
+                {/* Transcript Content */}
+                {selectedTranscript.length > 0 ? (
+                  selectedTranscript.map((entry, i) => (
+                    <div key={i} className="p-4 border rounded-lg bg-white shadow-sm">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">
+                          Call #{entry.call_id}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                        {entry.transcript}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-20 text-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
+                    <p className="text-slate-500 font-semibold text-sm">No transcript available</p>
+                    <p className="text-xs text-slate-400 mt-1">This student has not completed the AI call for this assignment.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
         </div>
       )}
-    </div>
-  </div>
-)}
     </>
   );
 }

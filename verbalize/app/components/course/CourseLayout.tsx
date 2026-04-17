@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 import { useParams } from "next/navigation"; 
+import Logo from "../assets/Verbalize-Picsart-BackgroundRemover.jpg";
 
 type CourseLayoutProps = {
   current: "assignments" | "students" | "grades";
@@ -35,7 +36,7 @@ export default function CourseLayout({
         <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-8">
           <Link href="/appledashboard">
             <div className="flex items-center gap-3">
-              <div className="size-8 bg-[#407EA7] rounded-lg shadow-lg shadow-[#407EA7]/20 flex items-center justify-center text-white font-bold">V</div>
+              <img src={Logo.src} alt="Logo" className="size-22 mb-2 rounded-full " />
               <span className="text-xl font-bold tracking-tight text-slate-800">Verbalize</span>
             </div>
           </Link>
