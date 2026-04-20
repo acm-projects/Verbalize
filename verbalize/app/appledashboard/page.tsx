@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import CreateModal from "../components/shared/CreateModal";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import Logo from "../assets/Verbalize-Picsart-BackgroundRemover.jpg";
 
 // Student structure
 type Course = {
@@ -128,9 +129,9 @@ export default function DashboardPage() {
       <main className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-20">
         {/* Header */}
         <header className="sticky top-0 z-50 border-b border-[#407EA7]/10 bg-white/80 backdrop-blur-md">
-          <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-8">
-            <div className="flex items-center gap-3">
-              <div className="size-8 bg-[#407EA7] rounded-lg shadow-lg shadow-[#407EA7]/20 flex items-center justify-center text-white font-bold">V</div>
+          <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6">
+            <div className="flex items-center gap-1">
+              <img src={Logo.src} alt="Logo" className="size-13 mb-2 rounded-full " />
               <span className="text-xl font-bold tracking-tight text-slate-800">Verbalize</span>
             </div>
 

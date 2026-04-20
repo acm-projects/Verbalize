@@ -169,6 +169,8 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
                   <div key={index}>
                     {/* STUDENT CARD */}
                     <div className="flex items-center gap-4 rounded-xl border border-blue-200 bg-[#fbfbfc] px-4 py-4 shadow-[0_4px_16px_rgba(15,23,42,0.04)]">
+
+                      {/* expand */}
                       <button
                         onClick={() => toggleRow(index)}
                         className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5b92b9] text-white transition hover:brightness-110"
