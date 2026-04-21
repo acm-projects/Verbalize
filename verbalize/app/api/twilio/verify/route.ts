@@ -21,7 +21,11 @@ export async function POST(request: Request) {
     .single();
 
   if (subError || !submission) {
-    const twiml = `<Response><Say voice="Polly.Joanna">Invalid PIN code. Access denied.</Say><Hangup/></Response>`;
+    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+    <Response>
+        <Say voice="Polly.Stephen-Neural">Invalid PIN code. Access denied.</Say>
+        <Hangup/>
+    </Response>`;
     return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } });
   }
 
@@ -40,8 +44,12 @@ export async function POST(request: Request) {
     .eq('assignment_id', submission.assignment_id);
 
   if (!specificRow || !generalPool || generalPool.length === 0) {
-    const twiml = `<Response><Say voice="Polly.Joanna">Error loading questions.</Say><Hangup/></Response>`;
-    return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
+    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+    <Response>
+        <Say voice="Polly.Stephen-Neural">No questions available for this assignment.</Say>
+        <Hangup/>
+    </Response>`;
+    return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } });
   }
 
     const randomGeneralId = generalPool[Math.floor(Math.random() * generalPool.length)].id;
@@ -54,7 +62,7 @@ export async function POST(request: Request) {
   
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
   <Response>
-      <Say voice="Polly.Joanna">PIN verified. Let's begin.</Say>
+      <Say voice="Polly.Stephen-Neural">PIN verified. Let's begin your assessment.</Say>
       <Redirect>/api/twilio/question?next=0&amp;qIds=${selectedQuestionIds}&amp;submissionId=${submission.id}</Redirect>
   </Response>`;
 

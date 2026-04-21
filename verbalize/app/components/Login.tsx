@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { useActionState } from 'react';
 import GoogleButton from "../assets/google-button.png";
 import SignInWithGoogleButton from "@/app/login/signInWithGoogleButton";
+import Logo from "../assets/Verbalize-Picsart-BackgroundRemover.jpg";
 
 export default function Login() {
     const [state, formAction, isPending] = useActionState(login, null);
@@ -32,9 +33,7 @@ export default function Login() {
                             <img src={BackButton.src} alt="Back" className="size-10 hover:shadow-lg" />
                         </Link>
                         <div className="flex items-center flex-col">
-                            <div className="w-20 h-20 bg-gradient-to-br from-[#407EA7] to-[#2D5A78] rounded-2xl flex items-center justify-center mb-4 text-white font-bold text-xs">
-                                LOGO
-                            </div>
+                            <img src={Logo.src} alt="Logo" className="size-22 mb-2 rounded-full " />
 
                             <h1 className="text-3xl font-bold mb-10 text-black">Sign in</h1>
 

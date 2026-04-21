@@ -18,12 +18,12 @@ export async function POST(request: Request) {
   const twiml = new VoiceResponse();
 
   if (!submissionId) {
-    twiml.say({ voice: 'Polly.Joanna' as any }, 'Error: missing submission data.');
+    twiml.say({ voice: 'Polly.Stephen-Neural' as unknown as "Polly.Joanna" }, 'Error: missing submission data.');
     return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
   }
 
   if (nextIdx >= 3) {
-    twiml.say({ voice: 'Polly.Joanna' as any }, 'You have completed all questions. Thank you for your time.');
+    twiml.say({ voice: 'Polly.Stephen-Neural' as unknown as "Polly.Joanna" }, 'You have completed all questions. Thank you for your time. Your answers are being processed. Please wait.');
     twiml.pause({ length: 3 }); 
     twiml.hangup();
     return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     .single();
 
   if (!submission) {
-    twiml.say({ voice: 'Polly.Joanna' as any }, 'Error: submission record not found.');
+    twiml.say({ voice: 'Polly.Stephen-Neural' as unknown as "Polly.Joanna" }, 'Error: submission record not found.');
     return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } });
   }
 
@@ -85,14 +85,14 @@ export async function POST(request: Request) {
   });
 
   if (nextIdx === 0 && !isRepeat) {
-    const introSay = gather.say({ voice: 'Polly.Joanna' as any });
+    const introSay = gather.say({ voice: 'Polly.Stephen-Neural' as unknown as "Polly.Joanna" }, '');
     introSay.prosody(
       { rate: '90%' }, 
       "Before we begin, please note: You will hear a beep two seconds after each question to start your recording. Before the beep, you can press 0 to hear the current question again."
     );
   }
 
-  const questionSay = gather.say({ voice: 'Polly.Joanna' as any });
+  const questionSay = gather.say({ voice: 'Polly.Stephen-Neural' as unknown as "Polly.Joanna" }, '');
   questionSay.prosody(
     { rate: '80%' }, 
     `Question ${nextIdx + 1}: ${questionToAsk}`

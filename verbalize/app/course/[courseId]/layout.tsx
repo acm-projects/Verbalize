@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 import { useParams, usePathname } from "next/navigation"; // 1. Added usePathname
+import Logo from "../../assets/Verbalize-Picsart-BackgroundRemover.jpg";
 
 type CourseLayoutProps = {
   children: ReactNode;
@@ -43,10 +44,10 @@ export default function CourseLayout({
     <main className="min-h-screen bg-[linear-gradient(180deg,#6aa7d8_0px,#8fbcdf_56px,#eef4fa_220px,#f5f5f7_380px)] text-[#1d1d1f]">
       {/* Single top nav */}
       <header className="sticky top-0 z-50 border-b border-[#407EA7]/10 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-8">
+        <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6">
           <Link href="/appledashboard">
-            <div className="flex items-center gap-3">
-              <div className="size-8 bg-[#407EA7] rounded-lg shadow-lg shadow-[#407EA7]/20 flex items-center justify-center text-white font-bold">V</div>
+            <div className="flex items-center gap-1">
+              <img src={Logo.src} alt="Logo" className="size-13 mb-2 rounded-full " />
               <span className="text-xl font-bold tracking-tight text-slate-800">Verbalize</span>
             </div>
           </Link>

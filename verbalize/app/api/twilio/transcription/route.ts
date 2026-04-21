@@ -19,7 +19,6 @@ export async function POST(request: Request) {
   
   const digits = formData.get('Digits') as string | null;
 
-
   if (digits === '0') {
     console.log(`User pressed 0. Repeating Q${parseInt(nextIdxStr || '0') + 1}`);
     const twiml = new VoiceResponse();
@@ -32,12 +31,10 @@ export async function POST(request: Request) {
     });
   }
 
-  
   const transcriptionText = formData.get('TranscriptionText') as string;
   const recordingUrl = formData.get('RecordingUrl') as string;
   const callSid = formData.get('CallSid') as string; 
 
- 
   if (transcriptionText && submissionId) {
     console.log(`Received Answer for Q${parseInt(nextIdxStr || '0') + 1}:`, transcriptionText);
     
@@ -102,7 +99,7 @@ export async function POST(request: Request) {
   const twiml = new VoiceResponse();
    
 
-  twiml.say({ voice: 'Polly.Joanna' }, "Response recorded.");
+   twiml.say({ voice: 'Polly.Stephen-Neural' as unknown as "Polly.Joanna" }, "Response recorded.");
   twiml.redirect(`/api/twilio/question?submissionId=${submissionId}&next=${nextIdx+1}&qIds=${qIds}`);
 
   return new NextResponse(twiml.toString(), {

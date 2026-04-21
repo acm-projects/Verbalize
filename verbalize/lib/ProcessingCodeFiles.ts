@@ -51,7 +51,8 @@ export async function processMasterZip(assignmentId: number, zipPath: string) {
             const fName = f.toLowerCase().trim();
             const isTargetFile = 
                    fName.endsWith(".java") || 
-                   fName.endsWith(".py") || 
+                   fName.endsWith(".py") ||
+                   fName.endsWith(".h") || 
                    fName.endsWith(".cpp") || 
                    fName.endsWith(".c") || 
                    fName.endsWith(".js") || 
