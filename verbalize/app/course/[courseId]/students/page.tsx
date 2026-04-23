@@ -10,7 +10,6 @@ type StudentInfo = {
   lastName: string;
   firstName: string;
   netId: string;
-  grade: string;
 };
 
 
@@ -25,7 +24,16 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
   const [selectedSubmissions, setSelectedSubmissions] = useState<any[]>([]);
   const [currentSubIndex, setCurrentSubIndex] = useState(0);
 
-  const [selectedTranscript, setSelectedTranscript] = useState<any[]>([]);
+  const [selectedTranscript, setSelectedTranscript] = useState<any[]>([
+  {
+    call_id: "call_001",
+    transcript: "Student introduced themselves and explained their approach to the assignment."
+  },
+  {
+    call_id: "call_002",
+    transcript: "Student discussed debugging steps and final solution."
+  }
+]);
   const [modalType, setModalType] = useState<"code" | "transcript" | null>(null);
 
   const handleViewCode = async (studentId?: string) => {
@@ -94,7 +102,6 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
             lastName: s?.last_name || "Unknown",
             firstName: s?.first_name || "Unknown",
             netId: s?.netID || "N/A",
-            grade: record.grade || "A" // Grade usually lives on the join table
           };
         });
         setStudents(mappedStudents);
@@ -109,39 +116,48 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
   }, [courseId]);
 
   const handleViewTranscript = async (studentId?: string) => {
-    if (!studentId) return;
+  if (!studentId) return;
 
-    // 1. Get ALL submissions for this student in THIS course
-    const { data: submissions, error } = await supabase
-      .from("Submissions")
-      .select(`
-      id,
-      Assignments!inner (assignment_name, course_id),
-      Results (
-        transcript,
-        summary,
-        call_id
-      )
-    `)
-      .eq("student_id", studentId)
-      .eq("Assignments.course_id", courseId)
-      .order("submitted_at", { ascending: false });
-
-    if (error || !submissions || submissions.length === 0) {
-      setSelectedSubmissions([]);
-      setSelectedTranscript([]);
-      setModalType("transcript");
-      return;
+  setSelectedSubmissions([
+    {
+      Assignments: { title: "Temperature Tracker" },
+      Results: [
+        {
+          call_id: "01",
+          transcript: "Student introduced themselves and explained their approach."
+        },
+        {
+          call_id: "02",
+          transcript: "Student discussed debugging and final solution."
+        }
+      ]
+    },
+    {
+      Assignments: { title: "Batting Average" },
+      Results: [
+        {
+          call_id: "03",
+          transcript: "I don't know."
+        }
+      ]
     }
+  ]);
 
-    // 2. Store all submissions so we can toggle through them
-    setSelectedSubmissions(submissions);
-    setCurrentSubIndex(0);
+  setCurrentSubIndex(0);
 
-    // 3. Set the transcript for the first (latest) assignment
-    setSelectedTranscript(submissions[0].Results || []);
-    setModalType("transcript");
-  };
+  setSelectedTranscript([
+    {
+      call_id: "Call_001",
+      transcript: "Local varaiables are used within a specific block while global variables are used throughout the code"
+    },
+    {
+      call_id: "Call_002",
+      transcript: "I don't know."
+    }
+  ]);
+
+  setModalType("transcript");
+};
 
 
   const badgeStyle = (grade: string) => {
@@ -178,8 +194,7 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
               <div>First Name</div>
               <div>Net ID</div>
               <div>Uploaded Code</div>
-              <div>AI Transcript</div>
-              <div>AI Evaluation</div>
+              <div>Student Submission</div>
             </div>
 
             {/* Table Body */}
@@ -220,15 +235,6 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
                       </span>
                     </div>
 
-                    <div>
-                      <span
-                        className={`inline-flex h-9 min-w-9 items-center justify-center rounded-full px-3 text-[15px] font-bold ${badgeStyle(
-                          student.grade
-                        )}`}
-                      >
-                        {student.grade}
-                      </span>
-                    </div>
                   </div>
                 ))
               )}
@@ -252,7 +258,7 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
             {/* CLOSE */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold">
-                {modalType === "code" ? "Student Code" : "AI Transcript"}
+                {modalType === "code" ? "Student Code" : "Student Submission"}
               </h2>
               <button onClick={() => setModalType(null)}>✕</button>
             </div>

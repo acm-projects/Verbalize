@@ -14,7 +14,7 @@ type AssignmentDetail = {
   name: string;
   status: "Completed" | "Pending";
   avgScore: number;
-  questions: QuestionResult[]; // Holds individual scores
+  questions: QuestionResult[]; 
 };
 
 type StudentGrade = {
@@ -24,6 +24,36 @@ type StudentGrade = {
   avgGrade: number;
   details: AssignmentDetail[];
 };
+
+// Hardcoded data based on your CSV
+const HARDCODED_STUDENTS: StudentGrade[] = [
+  {
+    firstName: "Harshitha",
+    lastName: "Mahesh",
+    netId: "dal267662",
+    avgGrade: 42.5,
+    details: [
+      {
+        name: "Temperature Tracker",
+        status: "Completed",
+        avgScore: 42.5,
+        questions: [
+          { id: 1, score: 85 },
+          { id: 2, score: 0 },
+        ],
+      }
+    ],
+  },
+  { firstName: "Rupesh", lastName: "Senthil", netId: "rxs240062", avgGrade: 0, details: [] },
+  { firstName: "Sunay", lastName: "Shehaan", netId: "sxs230509", avgGrade: 0, details: [] },
+  { firstName: "Sara", lastName: "Lee", netId: "sl321", avgGrade: 0, details: [] },
+  { firstName: "David", lastName: "Brown", netId: "db654", avgGrade: 0, details: [] },
+  { firstName: "Nguyen", lastName: "Huy", netId: "dal882689", avgGrade: 0, details: [] },
+  { firstName: "Tom", lastName: "Cruise", netId: "xx8263", avgGrade: 0, details: [] },
+  { firstName: "Justin", lastName: "Beiber", netId: "bb8y798324", avgGrade: 0, details: [] },
+  { firstName: "Lebron", lastName: "James", netId: "lj71873", avgGrade: 0, details: [] },
+  { firstName: "Steph", lastName: "Curry", netId: "sp3243432", avgGrade: 0, details: [] },
+];
 
 function getStatusStyle(status: "Completed" | "Pending") {
   if (status === "Completed") return "bg-green-100 text-green-700 border-green-200";
@@ -36,91 +66,17 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
   const [loading, setLoading] = useState(true);
   const [openRows, setOpenRows] = useState<number[]>([]);
 
-  const supabase = createClient();
   const resolvedParams = use(params);
   const courseId = Number(resolvedParams.courseId);
 
   useEffect(() => {
-    async function fetchStudents() {
-      if (!courseId) return;
-      setLoading(true);
-
-      const { data: courseStudents, error } = await supabase
-        .from("Course_Students")
-        .select(`
-          student_id,
-          Students ( id, last_name, first_name, netID )
-        `)
-        .eq("course_id", courseId);
-
-      if (error) {
-        console.error("Error fetching course students:", error);
-        setLoading(false);
-        return;
-      }
-
-      const finalStudents: StudentGrade[] = await Promise.all(
-        courseStudents.map(async (record: any) => {
-          const s = record.Students;
-
-          const { data: submissions } = await supabase
-            .from("Submissions")
-            .select(`
-                  id,
-                  assignment_id,
-                  Assignments!inner ( assignment_name, course_id ),
-                  Results ( id, confidence_score ) 
-                `)
-            .eq("student_id", s.id)
-            .eq("Assignments.course_id", courseId);
-
-          let totalOverall = 0;
-          let countOverall = 0;
-          const details: AssignmentDetail[] = [];
-
-          submissions?.forEach((sub: any) => {
-            const results = sub.Results || [];
-            const hasResults = results.length > 0;
-
-            // Extract individual scores
-            const questions: QuestionResult[] = results.map((r: any) => ({
-              id: r.id,
-              score: Math.round(r.confidence_score || 0)
-            }));
-
-            let assignmentAvg = 0;
-            if (hasResults) {
-              const sum = results.reduce((acc: number, curr: any) => acc + (curr.confidence_score || 0), 0);
-              assignmentAvg = sum / results.length;
-              totalOverall += assignmentAvg;
-              countOverall++;
-            }
-
-            details.push({
-              name: sub.Assignments?.assignment_name || `Assignment ${sub.assignment_id}`,
-              status: hasResults ? "Completed" : "Pending",
-              avgScore: Math.round(assignmentAvg),
-              questions: questions,
-            });
-          });
-
-          const avgGrade = countOverall > 0 ? totalOverall / countOverall : 0;
-
-          return {
-            lastName: s?.last_name || "Unknown",
-            firstName: s?.first_name || "Unknown",
-            netId: s?.netID || "N/A",
-            avgGrade: Math.round(avgGrade),
-            details,
-          };
-        })
-      );
-
-      setStudents(finalStudents);
+    // Simulate a brief loading state then set the hardcoded data
+    setLoading(true);
+    const timer = setTimeout(() => {
+      setStudents(HARDCODED_STUDENTS);
       setLoading(false);
-    }
-
-    fetchStudents();
+    }, 500);
+    return () => clearTimeout(timer);
   }, [courseId]);
 
   const toggleRow = (index: number) => {
@@ -154,7 +110,6 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5b92b9]" />
             </div>
           ) : students.length === 0 ? (
-            /* PRESERVED: Original empty state formatting */
             <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
               <h3 className="text-lg font-medium text-slate-600 mb-2">No students yet</h3>
               <p className="text-sm text-slate-400">Students will appear once submissions are made.</p>
@@ -164,13 +119,12 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
               {students.map((student, index) => {
                 const isOpen = openRows.includes(index);
                 const completedDetails = student.details.filter(d => d.status === "Completed");
+                const overallStatus = completedDetails.length > 0 ? "Completed" : "Pending";
 
                 return (
                   <div key={index}>
                     {/* STUDENT CARD */}
                     <div className="flex items-center gap-4 rounded-xl border border-blue-200 bg-[#fbfbfc] px-4 py-4 shadow-[0_4px_16px_rgba(15,23,42,0.04)]">
-
-                      {/* expand */}
                       <button
                         onClick={() => toggleRow(index)}
                         className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5b92b9] text-white transition hover:brightness-110"
@@ -193,18 +147,14 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
 
                       <div className="w-[140px] text-center">
                         <p className="text-[12px] uppercase text-[#9ca3af] font-semibold">Status</p>
-                        <span
-                          className={`mt-2 inline-block rounded-full px-3 py-1 text-[12px] font-semibold ${getStatusStyle(
-                            completedDetails.length > 0 ? "Completed" : "Pending"
-                          )}`}
-                        >
-                          {completedDetails.length > 0 ? "Completed" : "Pending"}
+                        <span className={`mt-2 inline-block rounded-full px-3 py-1 text-[12px] font-semibold ${getStatusStyle(overallStatus)}`}>
+                          {overallStatus}
                         </span>
                       </div>
 
                       <div className="w-[140px] text-center">
                         <p className="text-[12px] uppercase text-[#9ca3af] font-semibold">Avg Grade</p>
-                        <p className="mt-2 text-[20px] font-bold text-[#1d1d1f]">{student.avgGrade}</p>
+                        <p className="mt-2 text-[20px] font-bold text-[#1d1d1f]">{student.avgGrade}%</p>
                       </div>
                     </div>
 
@@ -230,7 +180,6 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
                                     <div className="text-[12px] opacity-70 italic">Assignment Avg: {d.avgScore}%</div>
                                   </div>
                                   
-                                  {/* Individual Question Scores Grid */}
                                   <div className="flex flex-wrap gap-4">
                                     {d.questions.map((q, qIdx) => (
                                       <div key={q.id} className="flex items-center gap-2">
@@ -242,7 +191,6 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
                                 </div>
                               ))
                             ) : (
-                              /* PRESERVED: Original "No completed assignments" text */
                               <div className="px-5 py-2 text-[12px] text-slate-400 italic">
                                 No completed assignments found for this student.
                               </div>
