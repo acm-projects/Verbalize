@@ -179,7 +179,6 @@ export default function StudentsPage({ params }: { params: Promise<{ courseId: n
               <div>Net ID</div>
               <div>Uploaded Code</div>
               <div>AI Transcript</div>
-              <div>AI Evaluation</div>
             </div>
 
             {/* Table Body */}
