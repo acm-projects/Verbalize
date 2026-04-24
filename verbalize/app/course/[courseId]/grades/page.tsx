@@ -2,7 +2,6 @@
 
 import { useState, useEffect, use } from "react";
 import { motion, AnimatePresence } from "framer-motion"; 
-import CreateModal from "@/app/components/shared/CreateModal";
 import { createClient } from "@/lib/supabase/client";
 
 type QuestionResult = {
@@ -31,7 +30,6 @@ function getStatusStyle(status: "Completed" | "Pending") {
 }
 
 export default function GradesPage({ params, }: { params: Promise<{ courseId: string }>; }) {
-  const [openModal, setOpenModal] = useState(false);
   const [students, setStudents] = useState<StudentGrade[]>([]);
   const [loading, setLoading] = useState(true);
   const [openRows, setOpenRows] = useState<number[]>([]);
@@ -138,13 +136,7 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
             <h1 className="text-2xl font-bold text-slate-800">Grades</h1>
             <p className="text-sm text-slate-500">Course ID: {courseId}</p>
           </div>
-
-          <button
-            onClick={() => setOpenModal(true)}
-            className="rounded-xl bg-[#5b92b9] px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-[#4a7a9c] transition-colors"
-          >
-            + Add Assignment
-          </button>
+          
         </div>
 
         {/* CONTENT */}
@@ -258,13 +250,6 @@ export default function GradesPage({ params, }: { params: Promise<{ courseId: st
           )}
         </div>
       </div>
-
-      <CreateModal
-        open={openModal}
-        mode="assignment"
-        courseId={courseId}
-        onClose={() => setOpenModal(false)}
-      />
     </>
   );
 }

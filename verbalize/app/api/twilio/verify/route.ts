@@ -30,12 +30,34 @@ export async function POST(request: Request) {
     return new NextResponse(twiml, { headers: { 'Content-Type': 'text/xml' } });
   }
 
+  
+  const { data: specificRow } = await supabase
+    .from('StudentSpecificQuestions')
+    .select('id')
+    .eq('assignment_id', submission.assignment_id)
+    .eq('student_id', submission.student_id)
+    .limit(1)
+    .single();
+
+  
+  const { data: generalPool } = await supabase
+    .from('Assignment_Questions')
+    .select('id')
+    .eq('assignment_id', submission.assignment_id)
+    .limit(1)
+    .single();
+
+  
+  const qIds = `${specificRow?.id || ''},${generalPool?.id || ''}`;
+  const sources = `student_specific,assignment_general`;
+
+  
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
   <Response>
       <Say voice="Polly.Stephen-Neural">
-          <prosody rate="80%">PIN verified.</prosody>
+          <prosody rate="80%">PIN verified. Let's begin your assessment.</prosody>
       </Say>
-      <Redirect>/api/twilio/question?next=0&amp;submissionId=${submission.id}</Redirect>
+      <Redirect>/api/twilio/question?next=0&amp;submissionId=${submission.id}&amp;qIds=${qIds}&amp;sources=${sources}</Redirect>
   </Response>`;
 
   return new NextResponse(twiml, { 
