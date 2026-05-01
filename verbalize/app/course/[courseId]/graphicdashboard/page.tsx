@@ -30,7 +30,7 @@ export default function GraphicDashboard({ params }: { params: Promise<{ courseI
         .select(`
           assignment_id,
           Assignments!inner ( assignment_name, course_id ),
-          Results ( confidence_score )
+          Results ( confidence_score, call_id )
         `)
         .eq("Assignments.course_id", courseId);
 
@@ -40,14 +40,33 @@ export default function GraphicDashboard({ params }: { params: Promise<{ courseI
       }
 
       const grouped: any = {};
+
       data.forEach(sub => {
         const assignment = Array.isArray(sub.Assignments) ? sub.Assignments[0] : sub.Assignments;
-
         const title = assignment?.assignment_name || `Assignment ${sub.assignment_id}`;
-        const scores = sub.Results?.map((r: any) => r.confidence_score).filter((s: any) => s !== null) || [];
+
+        const results = sub.Results || [];
+
+        const callGroups: Record<string, number[]> = {};
+
+        results.forEach((r: any) => {
+          if (!r?.call_id || r?.confidence_score == null) return;
+
+          if (!callGroups[r.call_id]) {
+            callGroups[r.call_id] = [];
+          }
+
+          callGroups[r.call_id].push(r.confidence_score);
+        });
+
+        const averagedScores = Object.values(callGroups).map((scores: any) => {
+          return scores.reduce((a: number, b: number) => a + b, 0) / scores.length;
+        });
 
         if (!grouped[title]) grouped[title] = [];
-        grouped[title].push(...scores);
+
+        // ✅ push ONLY averaged values (not raw scores)
+        grouped[title].push(...averagedScores);
       });
 
       const finalDetails: any = {};
@@ -115,7 +134,7 @@ export default function GraphicDashboard({ params }: { params: Promise<{ courseI
                     <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} />
                     <Bar dataKey="students" radius={[4, 4, 0, 0]} barSize={40}>
                       {currentSet.data.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.range === "80-100" ? "#407EA7" : "#407EA740"} />
+                        <Cell key={`cell-${index}`} fill= "#407EA740" />
                       ))}
                     </Bar>
                   </BarChart>

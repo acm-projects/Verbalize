@@ -32,8 +32,8 @@ export async function POST(request: Request) {
   }
 
   const demoQuestions = [
-    "Please explain the difference between a local variable and a global variable.",
-    "What happens when your code accesses an array index out of bounds?"
+    "What happens when your code accesses an array index out of bounds?",
+    "Please explain the difference between a local variable and a global variable."
   ];
 
   if (nextIdx >= demoQuestions.length) {
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     action: transcriptionUrl,
     method: 'POST',
     speechTimeout: 'auto',
-    timeout: 8,
+    timeout: 20,
   });
 
   const sayNode = gather.say(

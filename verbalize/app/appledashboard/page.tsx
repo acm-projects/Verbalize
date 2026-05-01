@@ -104,9 +104,12 @@ export default function DashboardPage() {
               ? Math.round(((submissionCount || 0) / expectedTotal) * 100) 
               : 0;
             
+            var grade = gradedCount || 0;
+
             const gradeProgress = (submissionCount || 0) > 0 
-              ? Math.round(((gradedCount || 0) / (submissionCount || 0)) * 100) 
+              ? Math.round((((grade / 2) || 0) / (submissionCount || 0)) * 100) 
               : 0;
+              
 
             newStats[course.id] = {
               studentCount: totalStudents,
